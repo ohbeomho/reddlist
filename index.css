@@ -1,0 +1,55 @@
+@font-face {
+  font-family: 'Lato';
+  src: url(Lato.ttf);
+}
+
+* {
+  font-family: 'Lato';
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+nav {
+  display: flex;
+  background-color: rgb(200, 50, 0);
+  color: white;
+  justify-content: space-between;
+  align-items: stretch;
+  padding: 0 10px;
+  height: 4rem;
+}
+
+button {
+  all: unset;
+  transition: all 0.3s;
+  user-select: none;
+  cursor: pointer;
+}
+
+nav>b {
+  align-content: center;
+  font-size: 1.5rem;
+}
+
+nav>.buttons {
+  display: flex;
+  align-items: stretch;
+}
+
+nav button {
+  padding: 0.5rem;
+}
+
+nav button:hover {
+  background-color: rgb(50, 50, 50);
+}
+
+main {
+  flex: 1;
+  display: grid;
+}
