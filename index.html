@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="index.css" />
+    <title>reddlist</title>
+  </head>
+  <body>
+    <dialog id="dlg-add"></dialog>
+    <dialog id="dlg-options"></dialog>
+    <dialog id="dlg-subreddit"></dialog>
+
+    <nav>
+      <b>reddlist</b>
+      <div class="buttons">
+        <button id="btn-add">Add subreddit</button>
+        <button id="btn-options">Options</button>
+      </div>
+    </nav>
+    <main>
+      <!-- Subreddit preview card layout
+        - Shows 3 recent posts from its subreddit
+        - Dialog with full info of subreddit shows when it's clicked
+      -->
+      <div class="subreddit">
+        <img class="banner" />
+        <div class="info">
+          <img class="logo" />
+          <div class="name"></div>
+        </div>
+        <ul class="posts"></ul>
+      </div>
+    </main>
+  </body>
+</html>
