@@ -46,10 +46,22 @@ nav button {
 }
 
 nav button:hover {
-  background-color: rgb(50, 50, 50);
+  backdrop-filter: brightness(0.8);
 }
 
 main {
   flex: 1;
   display: grid;
+}
+
+dialog {
+  border: none;
+}
+
+dialog>div {
+  display: flex;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
 }
