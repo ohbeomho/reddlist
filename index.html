@@ -4,10 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="index.css" />
+    <script
+      src="https://kit.fontawesome.com/e217a51301.js"
+      crossorigin="anonymous"
+    ></script>
     <title>reddlist</title>
   </head>
   <body>
-    <dialog id="dlg-add"></dialog>
+    <dialog id="dlg-add">
+      <div>
+        <div class="search"></div>
+        <div class="selected"></div>
+      </div>
+    </dialog>
     <dialog id="dlg-options"></dialog>
     <dialog id="dlg-subreddit"></dialog>
 
@@ -18,19 +27,8 @@
         <button id="btn-options">Options</button>
       </div>
     </nav>
-    <main>
-      <!-- Subreddit preview card layout
-        - Shows 3 recent posts from its subreddit
-        - Dialog with full info of subreddit shows when it's clicked
-      -->
-      <div class="subreddit">
-        <img class="banner" />
-        <div class="info">
-          <img class="logo" />
-          <div class="name"></div>
-        </div>
-        <ul class="posts"></ul>
-      </div>
-    </main>
+    <main></main>
+
+    <script src="index.js"></script>
   </body>
 </html>
