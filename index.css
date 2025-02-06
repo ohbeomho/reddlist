@@ -203,6 +203,7 @@ dialog.add button {
 .subreddit .post .score {
   text-align: center;
   color: orangered;
+  min-width: 3rem;
 }
 
 .error {
