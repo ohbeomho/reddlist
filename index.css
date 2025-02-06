@@ -97,7 +97,8 @@ main>div {
 
 dialog.add {
   text-align: center;
-  border: none;
+  border: 2px solid lightgray;
+  border-radius: 0.5rem;
 }
 
 dialog.add::backdrop {
@@ -114,7 +115,7 @@ dialog.add input {
 
 dialog.add input:hover,
 dialog.add input:focus {
-  border-color: black;
+  border-color: dimgray;
 }
 
 dialog.add button {
