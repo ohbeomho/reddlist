@@ -31,7 +31,7 @@ class Subreddit {
     let diff = now - timestampSec, n = 0
     console.log(diff)
     const units = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
-    const div = [60, 60, 60, 24, 7, 30, 12]
+    const div = [60, 60, 24, 7, 30, 12]
 
     while (true) {
       if (Math.round(diff / div[n]) < 1) break
