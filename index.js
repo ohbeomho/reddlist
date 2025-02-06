@@ -34,9 +34,9 @@ class Subreddit {
     const div = [60, 60, 24, 7, 30, 12]
 
     while (true) {
-      if (Math.round(diff / div[n]) < 1) break
+      if (Math.floor(diff / div[n]) < 1) break
 
-      diff = Math.round(diff / div[n])
+      diff = Math.floor(diff / div[n])
       n++
     }
 
