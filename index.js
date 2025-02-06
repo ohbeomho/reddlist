@@ -25,6 +25,24 @@ class Subreddit {
     return num + chars[n]
   }
 
+  // Relative time format
+  static formatDate(timestampSec) {
+    const now = Math.floor(Date.now() / 1000)
+    let diff = now - timestampSec, n = 0
+    console.log(diff)
+    const units = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
+    const div = [60, 60, 60, 24, 7, 30, 12]
+
+    while (true) {
+      if (Math.round(diff / div[n]) < 1) break
+
+      diff = Math.round(diff / div[n])
+      n++
+    }
+
+    return [diff, units[n] + (diff > 1 ? 's' : '')]
+  }
+
   constructor(name, sort) {
     this.info = { name }
     this.sort = sort
@@ -46,6 +64,7 @@ class Subreddit {
         author,
         num_comments: commentCount,
         score,
+        created: timestampSec
       } = post.data
       return {
         title,
@@ -55,6 +74,7 @@ class Subreddit {
         author,
         commentCount,
         score,
+        timestampSec
       }
     })
   }
@@ -71,11 +91,11 @@ class Subreddit {
     return {
       desc,
       bannerURL,
-      iconURL,
+      iconURL: iconURL || parsed.data.icon_img,
     }
   }
 
-  async fetch() {
+  async fetchData() {
     try {
       this.posts.push(...(await this.fetchPosts()))
       Object.assign(this.info, await this.fetchInfo())
@@ -90,6 +110,11 @@ class Subreddit {
     subreddits.splice(idx, 1)
     document.querySelector(`.subreddit:nth-of-type(${idx + 1})`).remove()
     save()
+  }
+
+  async refresh() {
+    this.posts = []
+    await this.fetchData()
   }
 
   getHTMLElement() {
@@ -134,6 +159,35 @@ class Subreddit {
       )
     }
 
+    const refreshButton = document.createElement('button')
+    refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
+    refreshButton.onclick = () => {
+      startLoading(loadButton)
+      element.querySelector('.posts').innerHTML = ''
+      this.refresh().then(() => {
+        element.querySelector('.posts').innerHTML = getPostElements(this.posts)
+        finishLoading(loadButton)
+      })
+    }
+
+    const sortSelect = document.createElement('select')
+    sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising'].map((sortOption) =>
+      `<option value="${sortOption.toLowerCase()}" ${sortOption.toLowerCase() === this.sort ? 'selected' : ''}>${sortOption}</option>`
+    ).join('\n')
+    sortSelect.onchange = () => {
+      this.sort = sortSelect.value
+      localData = localData.map((data) => data.name === this.info.name ? { ...data, sort: this.sort } : data)
+      this.posts = []
+      element.querySelector('.posts').innerHTML = ''
+      startLoading(loadButton)
+      this.fetchPosts().then((newPosts) => {
+        element.querySelector('.posts').innerHTML = getPostElements(newPosts)
+        finishLoading(loadButton)
+        this.posts.push(...newPosts)
+      })
+      save()
+    }
+
     const getPostElements = (posts) =>
       posts
         .map(
@@ -142,6 +196,7 @@ class Subreddit {
     <div class="info">
       <a class="author" href="https://www.reddit.com/u/${post.author}" target="_blank">u/${post.author}</a>
       <a class="title" href="https://www.reddit.com/r/${this.info.name}/comments/${post.id}" target="_blank">${post.title}</a>
+      <div class="time">${Subreddit.formatDate(post.timestampSec).join(' ')} ago</div>
     </div>
     <div class="score">
       <i class="fa-solid fa-angle-up"></i>
@@ -149,18 +204,31 @@ class Subreddit {
     </div>
   </li>`,
         )
-        .join('')
+        .join('\n')
 
-    element.innerHTML = `${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>` : ''}
+    element.innerHTML = `
+${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>` : ''}
 <div class="info">
   <img class="icon" src="${this.info.iconURL}" alt="r/" />
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
+<div class="actions">
+  <div>
+    <i class="fa-solid fa-arrow-down-wide-short"></i> Sort by:
+    <span class="select">
+      <i class="fa-solid fa-caret-down"></i>
+    </span>
+  </div>
+</div>
 <ul class="posts">
-${getPostElements(this.posts)}
+  ${getPostElements(this.posts)}
 </ul>`
+
     element.querySelector('&>.info').appendChild(optionsButton)
     element.querySelector('.posts').after(loadButton)
+    element.querySelector('.select').prepend(sortSelect)
+    element.querySelector('.actions').appendChild(refreshButton)
+
     return element
   }
 }
@@ -212,8 +280,6 @@ function finishLoading(button) {
   delete loadingButtons[button]
 }
 
-startLoading(addButton)
-
 // Close the dialog when the outside of the dialog is clicked.
 addDialog.onclick = (e) =>
   (e.offsetX < 0 ||
@@ -228,7 +294,7 @@ addDialog.querySelector('button').onclick = () => {
   Subreddit.add(input.value)
   const newSubreddit = new Subreddit(input.value, 'hot')
   subreddits.push(newSubreddit)
-  newSubreddit.fetch().then(() => {
+  newSubreddit.fetchData().then(() => {
     document
       .querySelector('main>div:last-child')
       .before(newSubreddit.getHTMLElement())
@@ -249,9 +315,9 @@ window.onload = () => {
   if (subreddits.length) messageDiv.classList.add('loading')
   addButton.after(messageDiv)
 
-  if (!subreddits.length) finishLoading(addButton)
+  startLoading(addButton)
 
-  Promise.all(subreddits.map((subreddit) => subreddit.fetch())).then(() => {
+  Promise.all(subreddits.map((subreddit) => subreddit.fetchData())).then(() => {
     finishLoading(addButton)
     if (messageDiv.classList.length === 2) messageDiv.remove()
     subreddits.forEach((subreddit) =>

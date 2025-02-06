@@ -23,12 +23,14 @@ a:hover {
 }
 
 button,
-input {
+input,
+select {
   all: unset;
   transition: all 0.3s;
 }
 
-button {
+button,
+.select {
   user-select: none;
   cursor: pointer;
   background-color: lightgray;
@@ -36,7 +38,8 @@ button {
   border-radius: 0.5rem;
 }
 
-button:hover {
+button:hover,
+.select:hover {
   filter: brightness(0.7);
 }
 
@@ -142,10 +145,10 @@ dialog.add button {
   transition: all 0.3s;
   padding: 0.4rem 1rem;
   position: sticky;
+  z-index: 1;
   top: 0;
   background-color: white;
 }
-
 
 .subreddit>.info .icon {
   width: 2.5rem;
@@ -184,12 +187,17 @@ dialog.add button {
 }
 
 .subreddit .post .author {
-  color: gray;
+  color: black;
 }
 
 .subreddit .post .title {
   display: block;
   margin-top: 0.5rem;
+}
+
+.subreddit .post .time {
+  font-size: 0.8rem;
+  color: gray;
 }
 
 .subreddit .post .score {
@@ -208,6 +216,35 @@ dialog.add button {
 
 .message {
   margin-top: 1rem;
+}
+
+.select {
+  padding: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.select i {
+  position: absolute;
+  right: 0.7rem;
+  pointer-events: none;
+}
+
+.select select {
+  padding: 0.4rem;
+  padding-right: 1.5rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.actions {
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 div.options {
