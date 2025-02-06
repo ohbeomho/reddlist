@@ -113,9 +113,11 @@ class Subreddit {
     const optionsButton = document.createElement('button')
     optionsButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
     optionsButton.className = 'options'
-    optionsButton.onclick = () => {
-      // TODO: Show options (Remove, Post sort options)
+    optionsButton.onclick = (e) => {
+      optionsMenu.openMenu(this, optionsButton)
+      e.stopPropagation()
     }
+
 
     const loadButton = document.createElement('button')
     loadButton.innerText = 'Load more'
@@ -149,7 +151,7 @@ class Subreddit {
         )
         .join('')
 
-    element.innerHTML = `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>
+    element.innerHTML = `${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>` : ''}
 <div class="info">
   <img class="icon" src="${this.info.iconURL}" alt="r/" />
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
@@ -173,6 +175,28 @@ function save() {
 const addDialog = document.querySelector('dialog.add')
 const addButton = document.querySelector('button.add')
 const messageDiv = document.createElement('div')
+const optionsMenu = document.querySelector('div.options')
+
+optionsMenu.openMenu = (subreddit, button) => {
+  optionsMenu.currentSubreddit = subreddit
+  optionsMenu.style.opacity = 1
+  optionsMenu.style.pointerEvents = 'all'
+  const { top, left } = button.getBoundingClientRect()
+  optionsMenu.style.top = `${top + button.clientHeight / 2}px`
+  optionsMenu.style.left = `${left + button.clientWidth / 2}px`
+  optionsMenu.opened = true
+}
+optionsMenu.closeMenu = () => {
+  optionsMenu.currentSubreddit = null
+  optionsMenu.style.opacity = 0
+  optionsMenu.style.pointerEvents = 'none'
+  optionsMenu.opened = false
+
+  setTimeout(() => {
+    optionsMenu.style.top = '-1000px'
+    optionsMenu.style.left = '-1000px'
+  }, 300)
+}
 
 const loadingButtons = {}
 
@@ -236,4 +260,17 @@ window.onload = () => {
         .before(subreddit.getHTMLElement()),
     )
   })
+}
+
+window.onclick = (e) => {
+  if (optionsMenu.opened && (e.clientX < optionsMenu.clientLeft || e.clientY < optionsMenu.clientTop || e.clientX > optionsMenu.clientLeft + optionsMenu.clientWidth || e.clientY > optionsMenu.clientTop + optionsMenu.clientHeight)) optionsMenu.closeMenu()
+}
+
+document.querySelector('main').onscroll = () => optionsMenu.closeMenu()
+document.querySelector('button.remove').onclick = (e) => {
+  if (!optionsMenu.currentSubreddit) return
+
+  optionsMenu.currentSubreddit.remove()
+  optionsMenu.closeMenu()
+  e.stopPropagation()
 }
