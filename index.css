@@ -52,6 +52,8 @@ main {
   padding: 1rem;
   max-height: calc(100vh - 2rem);
   align-items: stretch;
+  overflow-x: scroll;
+  gap: 1rem;
 }
 
 main>div:not(.subreddit) {
@@ -60,7 +62,7 @@ main>div:not(.subreddit) {
 }
 
 main>div {
-  width: 20rem;
+  flex: 0 0 20rem;
 }
 
 dialog.add {
@@ -97,9 +99,25 @@ dialog.add button {
   transition: all 0.3s;
 }
 
-.subreddit:hover {
+.subreddit:has(.error) {
+  color: red;
+  border-color: red;
+  place-content: center;
+  text-align: center;
+}
+
+.error {
+  font-size: 1.4rem;
+}
+
+.error-message {
+  text-align: left;
+  padding: 2rem 0;
+}
+
+.subreddit:not(:has(.error)):hover {
   border-color: black;
-  width: 25rem;
+  scale: 1.02;
 }
 
 .message {

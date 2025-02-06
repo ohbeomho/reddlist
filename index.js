@@ -8,8 +8,8 @@ class Subreddit {
   }
 
   static add(name) {
-    subreddits.push({ name, sort: 'hot' })
-    localStorage.setItem('reddlist-subreddits', JSON.stringify(subreddits))
+    localData.push({ name, sort: 'hot' })
+    save()
   }
 
   /**
@@ -18,6 +18,10 @@ class Subreddit {
   set sort(value) {
     if (!Subreddit.POST_SORT_OPTIONS.includes(value))
       throw new Error('Invalid sort option')
+    localData = localData.map((subreddit) =>
+      subreddit.name === this.name ? { ...subreddit, sort: value } : subreddit,
+    )
+    save()
     this.#sort = sort
   }
 
@@ -69,13 +73,40 @@ class Subreddit {
   }
 
   async fetch() {
-    this.posts = await this.#fetchPosts()
-    Object.assign(this.info, await this.#fetchInfo())
+    try {
+      this.posts = await this.#fetchPosts()
+      Object.assign(this.info, await this.#fetchInfo())
+    } catch (err) {
+      this.err = err
+    }
+  }
+
+  remove() {
+    const idx = subreddits.indexOf(this)
+    localData.splice(idx, 1)
+    subreddits.splice(idx, 1)
+    document.querySelector(`.subreddit:nth-of-type(${idx + 1})`).remove()
+    save()
   }
 
   getHTMLElement() {
     const element = document.createElement('div')
     element.className = 'subreddit'
+    if (this.err) {
+      const removeButton = document.createElement('button')
+      removeButton.innerText = 'Remove'
+      removeButton.style.color = 'black'
+      removeButton.onclick = () => this.remove()
+      element.innerHTML = `<div class="error">
+        Error loading:
+        <br />
+        <b>r/${this.info.name}</b>
+      </div>
+<div class="error-message">${this.err}</div>`
+      element.appendChild(removeButton)
+      return element
+    }
+
     element.innerHTML = `<div class="banner"></div>
 <div class="info">
   <div class="logo"></div>
@@ -102,19 +133,26 @@ class Subreddit {
   }
 }
 
-const subreddits = JSON.parse(
-  localStorage.getItem('reddlist-subreddits') || '[]',
-).map((data) => new Subreddit(data.name, data.sort))
+let localData = JSON.parse(localStorage.getItem('reddlist-subreddits') || '[]')
+const subreddits = localData.map((data) => new Subreddit(data.name, data.sort))
+
+function save() {
+  localStorage.setItem('reddlist-subreddits', JSON.stringify(localData))
+}
 
 const addDialog = document.querySelector('dialog.add')
 const addButton = document.querySelector('button.add')
 const messageDiv = document.createElement('div')
-addButton.disabled = true
+addButton.startLoading = () => {
+  addButton.disabled = true
+  addButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
+}
 addButton.finishLoading = () => {
   addButton.disabled = false
   addButton.innerHTML = '+'
-  messageDiv.remove()
 }
+
+addButton.startLoading()
 
 // Close the dialog when the outside of the dialog is clicked.
 addDialog.onclick = (e) =>
@@ -128,8 +166,18 @@ addDialog.querySelector('button').onclick = () => {
   if (!input.value) return
 
   Subreddit.add(input.value)
+  const newSubreddit = new Subreddit(input.value, 'hot')
+  subreddits.push(newSubreddit)
+  newSubreddit.fetch().then(() => {
+    document
+      .querySelector('main>div:last-child')
+      .before(newSubreddit.getHTMLElement())
+    addButton.finishLoading()
+  })
   document.querySelector('.message')?.remove()
   input.value = ''
+  addDialog.close()
+  addButton.startLoading()
 }
 addButton.onclick = () => addDialog.showModal()
 
@@ -137,15 +185,19 @@ window.onload = () => {
   messageDiv.innerText = subreddits.length
     ? 'Loading...'
     : 'Click here to add a subreddit'
-  messageDiv.className = 'message'
+  messageDiv.classList.add('message')
+  if (subreddits.length) messageDiv.classList.add('loading')
   addButton.after(messageDiv)
 
   if (!subreddits.length) addButton.finishLoading()
 
   Promise.all(subreddits.map((subreddit) => subreddit.fetch())).then(() => {
     addButton.finishLoading()
+    if (messageDiv.classList.length === 2) messageDiv.remove()
     subreddits.forEach((subreddit) =>
-      document.querySelector('main').prepend(subreddit.getHTMLElement()),
+      document
+        .querySelector('main>div:last-child')
+        .before(subreddit.getHTMLElement()),
     )
   })
 }
