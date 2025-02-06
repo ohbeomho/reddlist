@@ -1,87 +1,151 @@
 const baseURL = 'https://api.reddit.com'
-const options = JSON.parse(
-  localStorage.getItem('reddlist-options') || '{ "defaultSort": "hot" }',
-)
-const subreddits = JSON.parse(
-  localStorage.getItem('reddlist-subreddits') || '[]',
-)
-
-const dialogs = Array.from(document.querySelectorAll('dialog'))
-const navButtons = Array.from(document.querySelectorAll('nav button'))
-
-dialogs.forEach(
-  (dlg) =>
-    (dlg.onclick = (e) =>
-      (e.offsetX < 0 ||
-        e.offsetY < 0 ||
-        e.offsetX > dlg.clientWidth ||
-        e.offsetY > dlg.cientHeight) &&
-      dlg.close()),
-)
-navButtons.forEach((btn, idx) => (btn.onclick = () => dialogs[idx].showModal()))
-
-function changeOption(optionName, value) {
-  options[optionName] = value
-  localStorage.setItem('reddlist-options', JSON.stringify(options))
-}
 
 class Subreddit {
+  #sort
+
   static get POST_SORT_OPTIONS() {
     return ['hot', 'new', 'top', 'rising']
   }
 
   static add(name) {
-    subreddits.push(new Subreddit(name))
+    subreddits.push({ name, sort: 'hot' })
     localStorage.setItem('reddlist-subreddits', JSON.stringify(subreddits))
   }
 
-  constructor(name) {
-    this.name = name
-    this.fetchPosts(options.defaultSort)
-    this.fetchInfo()
+  /**
+   * @param {string} value
+   */
+  set sort(value) {
+    if (!Subreddit.POST_SORT_OPTIONS.includes(value))
+      throw new Error('Invalid sort option')
+    this.#sort = sort
   }
 
-  async fetchPosts(sort) {
-    if (!Subreddit.POST_SORT_OPTIONS.includes(sort))
-      throw new Error('[Subreddit.fetchPosts] Invalid sort option')
+  constructor(name, sort) {
+    this.info = { name }
+    this.#sort = sort
+    this.posts = []
+  }
+
+  // Fetch posts from the subreddit
+  async #fetchPosts() {
     // TODO: Load media (images/videos)
-    const response = await fetch(`${baseURL}/r/${this.name}/${sort}.json`)
+    const response = await fetch(
+      `${baseURL}/r/${this.info.name}/${this.#sort}.json`,
+    )
     const parsed = await response.json()
-    this.posts = parsed.data.children.map((post) => ({
-      title: post.data.title,
-      content: post.data.selftext,
-      author: post.data.author,
-      commentCount: post.data.num_comments,
-      score: post.data.score,
-    }))
+    return parsed.data.children.map((post) => {
+      const {
+        title,
+        selftext: content,
+        author,
+        num_comments: commentCount,
+        score,
+      } = post.data
+      return {
+        title,
+        content,
+        author,
+        commentCount,
+        score,
+      }
+    })
   }
 
-  fetchInfo() {}
+  // Fetch additional information of the subreddit.
+  async #fetchInfo() {
+    const response = await fetch(`${baseURL}/r/${this.info.name}/about.json`)
+    const parsed = await response.json()
+    const {
+      public_description: desc,
+      banner_background_image: bannerURL,
+      icon_img: iconURL,
+    } = parsed.data
+    return {
+      desc,
+      bannerURL,
+      iconURL,
+    }
+  }
 
-  getHTML(isCard) {
-    return `<div class="subreddit">
-  <img class="banner" />
-  <div class="info">
-    <img class="logo" />
-    <div class="name">r/${this.name}</div>
-  </div>
-  <ul class="posts">${(isCard ? this.posts.slice(0, 3) : this.posts).map(
-    (post) => `
-    <li class="post">
-      <div class="info">
-        <div class="title">${post.title}</div>
-        <div class="author">${post.author}</div>
-      </div>
-      <div class="score">
-        <i class="fa-solid fa-up-long"></i>
-        <span>${post.score}</span>
-        <i class="fa-solid fa-down-long"></i>
-      </div>
-    </li>`,
-  )}
-  </ul>
-</div>`
+  async fetch() {
+    this.posts = await this.#fetchPosts()
+    Object.assign(this.info, await this.#fetchInfo())
+  }
+
+  getHTMLElement() {
+    const element = document.createElement('div')
+    element.className = 'subreddit'
+    element.innerHTML = `<div class="banner"></div>
+<div class="info">
+  <div class="logo"></div>
+  <div class="name">r/${this.info.name}</div>
+</div>
+<ul class="posts">${this.posts.map(
+      (post) => `
+  <li class="post">
+    <div class="info">
+      <div class="author">${post.author}</div>
+      <div class="title">${post.title}</div>
+    </div>
+    <div class="score">
+      <i class="fa-solid fa-angle-up"></i>
+      <div>${post.score}</div>
+    </div>
+  </li>`,
+    )}
+  <li>
+    <button>Load more</button>
+  </li>
+</ul>`
+    return element
   }
 }
 
-window.onload = () => {}
+const subreddits = JSON.parse(
+  localStorage.getItem('reddlist-subreddits') || '[]',
+).map((data) => new Subreddit(data.name, data.sort))
+
+const addDialog = document.querySelector('dialog.add')
+const addButton = document.querySelector('button.add')
+const messageDiv = document.createElement('div')
+addButton.disabled = true
+addButton.finishLoading = () => {
+  addButton.disabled = false
+  addButton.innerHTML = '+'
+  messageDiv.remove()
+}
+
+// Close the dialog when the outside of the dialog is clicked.
+addDialog.onclick = (e) =>
+  (e.offsetX < 0 ||
+    e.offsetY < 0 ||
+    e.offsetX > addDialog.clientWidth ||
+    e.offsetY > addDialog.clientHeight) &&
+  addDialog.close()
+addDialog.querySelector('button').onclick = () => {
+  const input = addDialog.querySelector('input')
+  if (!input.value) return
+
+  Subreddit.add(input.value)
+  document.querySelector('.message')?.remove()
+  input.value = ''
+}
+addButton.onclick = () => addDialog.showModal()
+
+window.onload = () => {
+  messageDiv.innerText = subreddits.length
+    ? 'Loading...'
+    : 'Click here to add a subreddit'
+  messageDiv.className = 'message'
+  addButton.after(messageDiv)
+
+  if (!subreddits.length) addButton.finishLoading()
+
+  Promise.all(subreddits.map((subreddit) => subreddit.fetch())).then(() => {
+    addButton.finishLoading()
+    subreddits.forEach((subreddit) =>
+      document.querySelector('main').prepend(subreddit.getHTMLElement()),
+    )
+  })
+}

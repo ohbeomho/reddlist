@@ -11,23 +11,19 @@
     <title>reddlist</title>
   </head>
   <body>
-    <dialog id="dlg-add">
-      <div>
-        <div class="search"></div>
-        <div class="selected"></div>
-      </div>
+    <dialog class="add">
+      r/<input type="text" placeholder="Subreddit name" />
+      <br />
+      <button>Add</button>
     </dialog>
-    <dialog id="dlg-options"></dialog>
-    <dialog id="dlg-subreddit"></dialog>
 
-    <nav>
-      <b>reddlist</b>
-      <div class="buttons">
-        <button id="btn-add">Add subreddit</button>
-        <button id="btn-options">Options</button>
+    <main>
+      <div>
+        <button class="add">
+          <i class="fa-solid fa-spinner"></i>
+        </button>
       </div>
-    </nav>
-    <main></main>
+    </main>
 
     <script src="index.js"></script>
   </body>
