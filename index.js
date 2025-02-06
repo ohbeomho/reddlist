@@ -1,46 +1,47 @@
 const baseURL = 'https://api.reddit.com'
 
 class Subreddit {
-  #sort
-
-  static get POST_SORT_OPTIONS() {
-    return ['hot', 'new', 'top', 'rising']
-  }
-
   static add(name) {
     localData.push({ name, sort: 'hot' })
     save()
   }
 
-  /**
-   * @param {string} value
-   */
-  set sort(value) {
-    if (!Subreddit.POST_SORT_OPTIONS.includes(value))
-      throw new Error('Invalid sort option')
-    localData = localData.map((subreddit) =>
-      subreddit.name === this.name ? { ...subreddit, sort: value } : subreddit,
-    )
-    save()
-    this.#sort = sort
+  // Reddit style number format
+  // 1000 -> 1K
+  // 1000000 -> 1M
+  // 1000000000 -> 1B
+  static formatNumber(num) {
+    let n = 0
+    const chars = ['', 'K', 'M', 'B']
+
+    while (true) {
+      const newValue = Math.round(num / 100) / 10
+      if (newValue < 1) break
+
+      num = newValue
+      n++
+    }
+
+    return num + chars[n]
   }
 
   constructor(name, sort) {
     this.info = { name }
-    this.#sort = sort
+    this.sort = sort
     this.posts = []
   }
 
   // Fetch posts from the subreddit
-  async #fetchPosts() {
-    // TODO: Load media (images/videos)
+  async fetchPosts(after) {
     const response = await fetch(
-      `${baseURL}/r/${this.info.name}/${this.#sort}.json`,
+      `${baseURL}/r/${this.info.name}/${this.sort}.json${after ? `?after=${after}` : ''}`,
     )
     const parsed = await response.json()
     return parsed.data.children.map((post) => {
       const {
         title,
+        id,
+        name,
         selftext: content,
         author,
         num_comments: commentCount,
@@ -48,6 +49,8 @@ class Subreddit {
       } = post.data
       return {
         title,
+        id,
+        name,
         content,
         author,
         commentCount,
@@ -57,13 +60,13 @@ class Subreddit {
   }
 
   // Fetch additional information of the subreddit.
-  async #fetchInfo() {
+  async fetchInfo() {
     const response = await fetch(`${baseURL}/r/${this.info.name}/about.json`)
     const parsed = await response.json()
     const {
       public_description: desc,
       banner_background_image: bannerURL,
-      icon_img: iconURL,
+      community_icon: iconURL,
     } = parsed.data
     return {
       desc,
@@ -74,8 +77,8 @@ class Subreddit {
 
   async fetch() {
     try {
-      this.posts = await this.#fetchPosts()
-      Object.assign(this.info, await this.#fetchInfo())
+      this.posts.push(...(await this.fetchPosts()))
+      Object.assign(this.info, await this.fetchInfo())
     } catch (err) {
       this.err = err
     }
@@ -107,28 +110,55 @@ class Subreddit {
       return element
     }
 
-    element.innerHTML = `<div class="banner"></div>
-<div class="info">
-  <div class="logo"></div>
-  <div class="name">r/${this.info.name}</div>
-</div>
-<ul class="posts">${this.posts.map(
-      (post) => `
+    const optionsButton = document.createElement('button')
+    optionsButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
+    optionsButton.className = 'options'
+    optionsButton.onclick = () => {
+      // TODO: Show options (Remove, Post sort options)
+    }
+
+    const loadButton = document.createElement('button')
+    loadButton.innerText = 'Load more'
+    loadButton.style.display = 'block'
+    loadButton.style.margin = '1rem auto'
+    loadButton.onclick = () => {
+      startLoading(loadButton)
+      this.fetchPosts(this.posts[this.posts.length - 1].name).then(
+        (newPosts) => {
+          element.querySelector('.posts').innerHTML += getPostElements(newPosts)
+          this.posts.push(...newPosts)
+          finishLoading(loadButton)
+        }
+      )
+    }
+
+    const getPostElements = (posts) =>
+      posts
+        .map(
+          (post) => `
   <li class="post">
     <div class="info">
-      <div class="author">${post.author}</div>
-      <div class="title">${post.title}</div>
+      <a class="author" href="https://www.reddit.com/u/${post.author}" target="_blank">u/${post.author}</a>
+      <a class="title" href="https://www.reddit.com/r/${this.info.name}/comments/${post.id}" target="_blank">${post.title}</a>
     </div>
     <div class="score">
       <i class="fa-solid fa-angle-up"></i>
-      <div>${post.score}</div>
+      <div>${Subreddit.formatNumber(post.score)}</div>
     </div>
   </li>`,
-    )}
-  <li>
-    <button>Load more</button>
-  </li>
+        )
+        .join('')
+
+    element.innerHTML = `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>
+<div class="info">
+  <img class="icon" src="${this.info.iconURL}" alt="r/" />
+  <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
+</div>
+<ul class="posts">
+${getPostElements(this.posts)}
 </ul>`
+    element.querySelector('&>.info').appendChild(optionsButton)
+    element.querySelector('.posts').after(loadButton)
     return element
   }
 }
@@ -143,16 +173,22 @@ function save() {
 const addDialog = document.querySelector('dialog.add')
 const addButton = document.querySelector('button.add')
 const messageDiv = document.createElement('div')
-addButton.startLoading = () => {
-  addButton.disabled = true
-  addButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
-}
-addButton.finishLoading = () => {
-  addButton.disabled = false
-  addButton.innerHTML = '+'
+
+const loadingButtons = {}
+
+function startLoading(button) {
+  button.disabled = true
+  loadingButtons[button] = button.innerHTML
+  button.innerHTML = '<i class="fa-solid fa-spinner"></i>'
 }
 
-addButton.startLoading()
+function finishLoading(button) {
+  button.disabled = false
+  button.innerHTML = loadingButtons[button]
+  delete loadingButtons[button]
+}
+
+startLoading(addButton)
 
 // Close the dialog when the outside of the dialog is clicked.
 addDialog.onclick = (e) =>
@@ -172,12 +208,12 @@ addDialog.querySelector('button').onclick = () => {
     document
       .querySelector('main>div:last-child')
       .before(newSubreddit.getHTMLElement())
-    addButton.finishLoading()
+    finishLoading(addButton)
   })
   document.querySelector('.message')?.remove()
   input.value = ''
   addDialog.close()
-  addButton.startLoading()
+  startLoading(addButton)
 }
 addButton.onclick = () => addDialog.showModal()
 
@@ -189,10 +225,10 @@ window.onload = () => {
   if (subreddits.length) messageDiv.classList.add('loading')
   addButton.after(messageDiv)
 
-  if (!subreddits.length) addButton.finishLoading()
+  if (!subreddits.length) finishLoading(addButton)
 
   Promise.all(subreddits.map((subreddit) => subreddit.fetch())).then(() => {
-    addButton.finishLoading()
+    finishLoading(addButton)
     if (messageDiv.classList.length === 2) messageDiv.remove()
     subreddits.forEach((subreddit) =>
       document
