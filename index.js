@@ -29,7 +29,6 @@ class Subreddit {
   static formatDate(timestampSec) {
     const now = Math.floor(Date.now() / 1000)
     let diff = now - timestampSec, n = 0
-    console.log(diff)
     const units = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
     const div = [60, 60, 24, 7, 30, 12]
 
