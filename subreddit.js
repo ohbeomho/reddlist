@@ -195,38 +195,64 @@ export class Subreddit {
       return element
     }
 
-    const optionsButton = document.createElement('button')
-    optionsButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
-    optionsButton.className = 'options'
+    element.innerHTML = `
+<div class="info">
+  <img class="icon" alt="r/" />
+  <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
+</div>`
 
     const loadButton = document.createElement('button')
-    loadButton.innerText = 'Load more'
+    loadButton.innerText = 'Load'
     loadButton.className = 'load'
-    loadButton.onclick = () =>
-      this.fetchPosts(this.posts[this.posts.length - 1].name)
+    loadButton.onclick = () => this.fetchData()
 
-    const refreshButton = document.createElement('button')
-    refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
-    refreshButton.onclick = () => {
-      element.querySelector('.posts').innerHTML = ''
-      this.fetchData()
-    }
+    const loadingSpinner = document.createElement('div')
+    loadingSpinner.className = 'loading'
+    loadingSpinner.innerHTML = '<i class="fa-solid fa-spinner"></i>'
 
-    const sortSelect = document.createElement('select')
-    sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising']
-      .map(
-        (sortOption) =>
-          `<option value="${sortOption.toLowerCase()}" ${sortOption.toLowerCase() === this.sort ? 'selected' : ''}>${sortOption}</option>`
-      )
-      .join('\n')
-    sortSelect.onchange = () => {
-      this.sort = sortSelect.value
-      this.notify('sort-change')
-      element.querySelector('.posts').innerHTML = ''
-      this.fetchPosts()
-    }
+    element.appendChild(loadButton)
 
-    element.innerHTML = `
+    this.once('fetch-start', () => {
+      element.style.filter = 'brightness(0.9)'
+      element.appendChild(loadingSpinner)
+    })
+    this.once('fetch-finish', () => {
+      element.style.filter = 'none'
+      loadingSpinner.remove()
+      loadButton.remove()
+
+      const optionsButton = document.createElement('button')
+      optionsButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
+      optionsButton.className = 'options'
+
+      const loadPostButton = document.createElement('button')
+      loadPostButton.innerText = 'Load more'
+      loadPostButton.className = 'load'
+      loadPostButton.onclick = () =>
+        this.fetchPosts(this.posts[this.posts.length - 1].name)
+
+      const refreshButton = document.createElement('button')
+      refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
+      refreshButton.onclick = () => {
+        element.querySelector('.posts').innerHTML = ''
+        this.fetchPosts()
+      }
+
+      const sortSelect = document.createElement('select')
+      sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising']
+        .map(
+          (sortOption) =>
+            `<option value="${sortOption.toLowerCase()}" ${sortOption.toLowerCase() === this.sort ? 'selected' : ''}>${sortOption}</option>`
+        )
+        .join('\n')
+      sortSelect.onchange = () => {
+        this.sort = sortSelect.value
+        this.notify('sort-change')
+        element.querySelector('.posts').innerHTML = ''
+        this.fetchPosts()
+      }
+
+      element.innerHTML = `
 ${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>` : ''}
 <div class="info">
   <img class="icon" src="${this.info.iconURL}" alt="r/" />
@@ -244,22 +270,23 @@ ${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this
   ${this.posts.map((post) => post.getHTML()).join('')}
 </ul>`
 
-    element.querySelector('&>.info').appendChild(optionsButton)
-    element.querySelector('.posts').after(loadButton)
-    element.querySelector('.select').prepend(sortSelect)
-    element.querySelector('.actions').appendChild(refreshButton)
+      element.querySelector('&>.info').appendChild(optionsButton)
+      element.querySelector('.posts').after(loadPostButton)
+      element.querySelector('.select').prepend(sortSelect)
+      element.querySelector('.actions').appendChild(refreshButton)
 
-    this.on('fetch-post-start', () => {
-      loadButton.disabled = true
-      loadButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
-    })
-    this.on('fetch-post-finish', () => {
-      element.querySelector('.posts').innerHTML = this.posts
-        .map((post) => post.getHTML())
-        .join('')
+      this.on('fetch-post-start', () => {
+        loadPostButton.disabled = true
+        loadPostButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
+      })
+      this.on('fetch-post-finish', () => {
+        element.querySelector('.posts').innerHTML = this.posts
+          .map((post) => post.getHTML())
+          .join('')
 
-      loadButton.disabled = false
-      loadButton.innerHTML = 'Load more'
+        loadPostButton.disabled = false
+        loadPostButton.innerHTML = 'Load more'
+      })
     })
 
     return element

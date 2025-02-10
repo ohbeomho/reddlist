@@ -97,30 +97,21 @@ addDialog.querySelector('button').onclick = () => {
 addButton.onclick = () => addDialog.showModal()
 
 window.onload = () => {
-  messageDiv.innerText = subreddits.length
-    ? 'Loading...'
-    : 'Click here to add a subreddit'
-  messageDiv.classList.add('message')
-  if (subreddits.length) messageDiv.classList.add('loading')
-  addButton.after(messageDiv)
+  messageDiv.innerText = 'Click here to add a subreddit'
+  messageDiv.className = 'message'
+  if (!subreddits.length) addButton.after(messageDiv)
 
-  startLoading()
+  subreddits.forEach((subreddit) => {
+    subredditEvents(subreddit)
+    const element = subreddit.getHTMLElement()
+    document.querySelector('main>div:last-child').before(element)
 
-  Promise.all(subreddits.map((subreddit) => subreddit.fetchData())).then(() => {
-    finishLoading()
-    if (messageDiv.classList.length === 2) messageDiv.remove()
-    subreddits.forEach((subreddit) => {
-      subredditEvents(subreddit)
-      const element = subreddit.getHTMLElement()
-      document.querySelector('main>div:last-child').before(element)
-
-      const optionsButton = element.querySelector('button.options')
-      if (!optionsButton) return
-      optionsButton.onclick = (e) => {
-        optionsMenu.openMenu(this, optionsButton)
-        e.stopPropagation()
-      }
-    })
+    const optionsButton = element.querySelector('button.options')
+    if (!optionsButton) return
+    optionsButton.onclick = (e) => {
+      optionsMenu.openMenu(this, optionsButton)
+      e.stopPropagation()
+    }
   })
 }
 

@@ -131,7 +131,19 @@ dialog.add button {
   border-radius: 0.5rem;
   border: 2px solid lightgray;
   transition: all 0.3s;
+  background-color: white;
   position: relative;
+}
+
+.subreddit .loading {
+  position: absolute;
+  font-size: 2rem;
+  color: gray;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  text-align: center;
+  align-content: center;
 }
 
 .subreddit:has(.error) {
@@ -196,6 +208,7 @@ dialog.add button {
 
 .subreddit .post .title {
   display: block;
+  line-break: anywhere;
   margin-top: 0.5rem;
 }
 
