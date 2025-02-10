@@ -1,6 +1,15 @@
 import { Subreddit } from './subreddit.js'
 
 function subredditEvents(subreddit) {
+  subreddit.on('fetch-finish', (info) => {
+    const { name, icon, banner } = info
+    localData = localData.map((data) =>
+      data.name.toLowerCase() === subreddit.info.name.toLowerCase()
+        ? { ...data, name, icon, banner }
+        : data
+    )
+    save()
+  })
   subreddit.on('sort-change', (sort) => {
     localData = localData.map((data) =>
       data.name === subreddit.info.name ? { ...data, sort } : data
@@ -26,7 +35,12 @@ function newSubredditEvents(newSubreddit) {
 }
 
 let localData = JSON.parse(localStorage.getItem('reddlist-subreddits') || '[]')
-const subreddits = localData.map((data) => new Subreddit(data.name, data.sort))
+const subreddits = localData.map((data) => {
+  const { name, sort, icon, banner } = data
+  const subreddit = new Subreddit(name, icon, banner, sort)
+
+  return subreddit
+})
 
 function save() {
   localStorage.setItem('reddlist-subreddits', JSON.stringify(localData))

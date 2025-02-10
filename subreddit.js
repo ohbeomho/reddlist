@@ -38,8 +38,8 @@ function formatDate(timestampSec) {
 }
 
 export class Subreddit {
-  constructor(name, sort) {
-    this.info = { name }
+  constructor(name, icon, banner, sort) {
+    this.info = { name, icon, banner }
     this.sort = sort
     this.posts = []
     this.htmlElement = null
@@ -59,7 +59,7 @@ export class Subreddit {
       'fetch-info-finish': [],
       'fetch-post-start': [],
       'fetch-post-finish': [],
-      'fetch-finish': [],
+      'fetch-finish': ['info'],
       remove: [],
       'sort-change': ['sort']
     }
@@ -141,15 +141,15 @@ export class Subreddit {
     const {
       display_name: name,
       public_description: desc,
-      banner_background_image: bannerURL,
-      community_icon: iconURL
+      banner_background_image: banner,
+      community_icon: icon
     } = parsed.data
 
     Object.assign(this.info, {
       name,
       desc,
-      bannerURL,
-      iconURL: iconURL || parsed.data.icon_img
+      banner,
+      icon: icon || parsed.data.icon_img
     })
 
     this.notify('fetch-info-finish')
@@ -196,8 +196,9 @@ export class Subreddit {
     }
 
     element.innerHTML = `
+${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  <img class="icon" alt="r/" />
+  <img class="icon" src="${this.info.icon}" alt="r/" />
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -253,9 +254,9 @@ export class Subreddit {
       }
 
       element.innerHTML = `
-${this.info.bannerURL ? `<div class="banner" style="background-image: url(${this.info.bannerURL})"></div>` : ''}
+${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  <img class="icon" src="${this.info.iconURL}" alt="r/" />
+  <img class="icon" src="${this.info.icon}" alt="r/" />
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
