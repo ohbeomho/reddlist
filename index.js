@@ -90,6 +90,18 @@ function removeIcon(idx) {
   iconElements.splice(idx, 1)
 }
 
+function changeCurrentIcon() {
+  let newCurrent
+  if (currIdx >= subreddits.length) newCurrent = addIconElement
+  else newCurrent = iconElements[currIdx]
+
+  lastCurrentElement.classList.remove('current')
+  newCurrent.classList.add('current')
+  lastCurrentElement = newCurrent
+
+  icons.style.left = `calc(50% - ${newCurrent.offsetLeft}px - 1rem)`
+}
+
 // Close the dialog when the outside of the dialog is clicked.
 addDialog.onclick = (e) =>
   (e.offsetX < 0 ||
@@ -112,6 +124,7 @@ addDialog.querySelector('button').onclick = () => {
     .querySelector('main>div:last-child')
     .before(newSubreddit.getHTMLElement())
   addIcon(newSubreddit)
+  changeCurrentIcon()
 
   document.querySelector('.message')?.remove()
   input.value = ''
@@ -172,15 +185,5 @@ if (window.innerWidth <= 500) {
     touchStart.y = -1
   }
 
-  main.onscroll = () => {
-    let newCurrent
-    if (currIdx >= subreddits.length) newCurrent = addIconElement
-    else newCurrent = iconElements[currIdx]
-
-    lastCurrentElement.classList.remove('current')
-    newCurrent.classList.add('current')
-    lastCurrentElement = newCurrent
-
-    icons.style.left = `calc(50% - ${newCurrent.offsetLeft}px - 1rem)`
-  }
+  main.onscroll = () => changeCurrentIcon()
 }
