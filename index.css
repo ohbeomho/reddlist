@@ -102,6 +102,7 @@ main {
 main>div:not(.subreddit) {
   text-align: center;
   place-content: center;
+  border: 2px solid transparent;
 }
 
 main>div {
@@ -229,6 +230,8 @@ dialog.add button {
 }
 
 .subreddit .banner {
+  position: relative;
+  z-index: 1;
   height: 4rem;
   background-position: center;
   background-repeat: no-repeat;
@@ -333,5 +336,15 @@ dialog.add button {
 
   100% {
     rotate: 360deg;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  main {
+    overflow: hidden;
+  }
+
+  main>div {
+    flex: 0 0 calc(100vw - 2rem - 4px);
   }
 }

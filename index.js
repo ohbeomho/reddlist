@@ -43,6 +43,8 @@ function save() {
   localStorage.setItem('reddlist-subreddits', JSON.stringify(localData))
 }
 
+const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
+
 const addDialog = document.querySelector('dialog.add')
 const addButton = document.querySelector('button.add')
 
@@ -92,3 +94,30 @@ window.onload = () => {
 
 window.onclick = () =>
   document.querySelectorAll('.menu.open').forEach((menu) => menu.close())
+
+if (window.innerWidth <= 500) {
+  const touchStart = { x: -1, y: -1 }
+
+  window.ontouchstart = (e) => {
+    const { clientX: x, clientY: y } = e.touches[0]
+    touchStart.x = x
+    touchStart.y = y
+  }
+  window.ontouchmove = (e) => {
+    if (touchStart.x === -1) return
+    const { clientX: x, clientY: y } = e.touches[0]
+    const xdiff = touchStart.x - x
+    const ydiff = touchStart.y - y
+
+    if (Math.abs(xdiff) < Math.abs(ydiff) || Math.abs(xdiff) < 50) return
+
+    const scrollAmount =
+      (window.innerWidth - fontSize) * (xdiff / Math.abs(xdiff))
+    document
+      .querySelector('main')
+      .scrollBy({ left: scrollAmount, top: 0, behavior: 'smooth' })
+
+    touchStart.x = -1
+    touchStart.y = -1
+  }
+}
