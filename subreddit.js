@@ -50,7 +50,8 @@ export class Subreddit {
       'fetch-post-finish': [],
       'fetch-finish': [],
       remove: [],
-      'sort-change': []
+      'sort-change': [],
+      'html-load': []
     }
     this.args = {
       'fetch-start': [],
@@ -60,7 +61,8 @@ export class Subreddit {
       'fetch-post-finish': [],
       'fetch-finish': ['info'],
       remove: [],
-      'sort-change': ['sort']
+      'sort-change': ['sort'],
+      'html-load': []
     }
   }
 
@@ -305,6 +307,8 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
         loadPostButton.disabled = false
         loadPostButton.innerHTML = 'Load more'
       })
+
+      this.notify('html-load')
     })
 
     return this.htmlElement

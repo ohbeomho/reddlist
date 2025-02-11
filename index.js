@@ -12,8 +12,11 @@ function subredditEvents(subreddit) {
     localData = localData.map((data) =>
       equalsIgnoreCase(data.name, name) ? { ...data, name, icon, banner } : data
     )
-    changeIcon(subreddit, subreddits.indexOf(subreddit))
     save()
+  })
+  subreddit.once('html-load', () => {
+    changeIcon(subreddit, subreddits.indexOf(subreddit))
+    changeCurrentIcon()
   })
   subreddit.on('sort-change', (sort) => {
     localData = localData.map((data) =>
@@ -24,11 +27,12 @@ function subredditEvents(subreddit) {
     save()
   })
   subreddit.on('remove', () => {
+    removeIcon(subreddits.indexOf(subreddit))
+    changeCurrentIcon()
     subreddits.splice(subreddits.indexOf(subreddit), 1)
     localData = localData.filter(
       (data) => !equalsIgnoreCase(data.name, subreddit.info.name)
     )
-    removeIcon(subreddits.indexOf(subreddit))
     save()
   })
 }
@@ -118,12 +122,12 @@ addDialog.querySelector('button').onclick = () => {
   save()
 
   subreddits.push(newSubreddit)
-  subredditEvents(newSubreddit)
 
   document
     .querySelector('main>div:last-child')
     .before(newSubreddit.getHTMLElement())
   addIcon(newSubreddit)
+  subredditEvents(newSubreddit)
   changeCurrentIcon()
 
   document.querySelector('.message')?.remove()
@@ -141,11 +145,11 @@ window.onload = () => {
   }
 
   subreddits.forEach((subreddit) => {
-    subredditEvents(subreddit)
     document
       .querySelector('main>div:last-child')
       .before(subreddit.getHTMLElement())
     addIcon(subreddit)
+    subredditEvents(subreddit)
   })
 
   iconElements[0].classList.add('current')
