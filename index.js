@@ -162,8 +162,9 @@ window.onload = () => {
     subredditEvents(subreddit)
   })
 
-  iconElements[0].classList.add('current')
-  lastCurrentElement = iconElements[0]
+  const currentElement = subreddits.length ? iconElements[0] : addIconElement
+  currentElement.classList.add('current')
+  lastCurrentElement = currentElement
 }
 
 window.onclick = () =>
