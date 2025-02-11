@@ -95,7 +95,7 @@ main {
   padding: 1rem;
   max-height: calc(100vh - 2rem);
   align-items: stretch;
-  overflow-x: scroll;
+  overflow-x: auto;
   gap: 1rem;
 }
 
