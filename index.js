@@ -145,6 +145,8 @@ addDialog.querySelector('button').onclick = () => {
 addButton.onclick = () => addDialog.showModal()
 
 window.onload = () => {
+  main.scroll(0, 0)
+
   if (!subreddits.length) {
     const messageDiv = document.createElement('div')
     messageDiv.innerText = 'Click here to add a subreddit'
