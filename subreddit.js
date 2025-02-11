@@ -1,6 +1,5 @@
 const baseURL = 'https://api.reddit.com'
 
-// Reddit style number format
 // 1000 -> 1K
 // 1000000 -> 1M
 // 1000000000 -> 1B
@@ -175,15 +174,16 @@ export class Subreddit {
 
   getHTMLElement() {
     const element = document.createElement('div')
-    element.className = 'subreddit'
+    element.classList.add('subreddit')
 
     this.htmlElement = element
 
+    const removeButton = document.createElement('button')
+    removeButton.className = 'remove'
+    removeButton.innerText = 'Remove'
+    removeButton.onclick = () => this.remove()
+
     if (this.err) {
-      const removeButton = document.createElement('button')
-      removeButton.innerText = 'Remove'
-      removeButton.style.color = 'black'
-      removeButton.onclick = () => this.remove()
       element.innerHTML = `
 <div class="error">
   Error loading:
@@ -202,56 +202,42 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
-    const loadButton = document.createElement('button')
-    loadButton.innerText = 'Load'
-    loadButton.className = 'load'
-    loadButton.onclick = () => this.fetchData()
+    const fetchButton = document.createElement('button')
+    fetchButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
+    fetchButton.className = 'fetch'
+    fetchButton.onclick = () => this.fetchData()
+    element.appendChild(fetchButton)
 
     const loadingSpinner = document.createElement('div')
     loadingSpinner.className = 'loading'
     loadingSpinner.innerHTML = '<i class="fa-solid fa-spinner"></i>'
 
-    element.appendChild(loadButton)
+    const menu = document.createElement('div')
+    menu.className = 'menu'
+    menu.appendChild(removeButton)
+
+    const menuButton = document.createElement('button')
+    menuButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
+    menuButton.className = 'menu'
+    menuButton.appendChild(menu)
+    menuButton.onclick = (e) => {
+      if (menu.classList.contains('open')) menu.close()
+      else menu.open()
+      e.stopPropagation()
+    }
+
+    element.querySelector('.info').appendChild(menuButton)
+
+    menu.open = () => menu.classList.add('open')
+    menu.close = () => menu.classList.remove('open')
 
     this.once('fetch-start', () => {
-      element.style.filter = 'brightness(0.9)'
       element.appendChild(loadingSpinner)
+      fetchButton.remove()
     })
     this.once('fetch-finish', () => {
-      element.style.filter = 'none'
+      element.classList.add('loaded')
       loadingSpinner.remove()
-      loadButton.remove()
-
-      const optionsButton = document.createElement('button')
-      optionsButton.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>'
-      optionsButton.className = 'options'
-
-      const loadPostButton = document.createElement('button')
-      loadPostButton.innerText = 'Load more'
-      loadPostButton.className = 'load'
-      loadPostButton.onclick = () =>
-        this.fetchPosts(this.posts[this.posts.length - 1].name)
-
-      const refreshButton = document.createElement('button')
-      refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
-      refreshButton.onclick = () => {
-        element.querySelector('.posts').innerHTML = ''
-        this.fetchPosts()
-      }
-
-      const sortSelect = document.createElement('select')
-      sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising']
-        .map(
-          (sortOption) =>
-            `<option value="${sortOption.toLowerCase()}" ${sortOption.toLowerCase() === this.sort ? 'selected' : ''}>${sortOption}</option>`
-        )
-        .join('\n')
-      sortSelect.onchange = () => {
-        this.sort = sortSelect.value
-        this.notify('sort-change')
-        element.querySelector('.posts').innerHTML = ''
-        this.fetchPosts()
-      }
 
       element.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
@@ -271,10 +257,37 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
   ${this.posts.map((post) => post.getHTML()).join('')}
 </ul>`
 
-      element.querySelector('&>.info').appendChild(optionsButton)
+      element.querySelector('.info').appendChild(menuButton)
+
+      const loadPostButton = document.createElement('button')
+      loadPostButton.innerText = 'Load more'
+      loadPostButton.className = 'load'
+      loadPostButton.onclick = () =>
+        this.fetchPosts(this.posts[this.posts.length - 1].name)
       element.querySelector('.posts').after(loadPostButton)
-      element.querySelector('.select').prepend(sortSelect)
+
+      const refreshButton = document.createElement('button')
+      refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
+      refreshButton.onclick = () => {
+        element.querySelector('.posts').innerHTML = ''
+        this.fetchPosts()
+      }
       element.querySelector('.actions').appendChild(refreshButton)
+
+      const sortSelect = document.createElement('select')
+      sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising']
+        .map(
+          (sortOption) =>
+            `<option value="${sortOption.toLowerCase()}" ${sortOption.toLowerCase() === this.sort ? 'selected' : ''}>${sortOption}</option>`
+        )
+        .join('\n')
+      sortSelect.onchange = () => {
+        this.sort = sortSelect.value
+        this.notify('sort-change')
+        element.querySelector('.posts').innerHTML = ''
+        this.fetchPosts()
+      }
+      element.querySelector('.select').prepend(sortSelect)
 
       this.on('fetch-post-start', () => {
         loadPostButton.disabled = true
