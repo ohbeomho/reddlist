@@ -50,7 +50,8 @@ export class Subreddit {
       'fetch-post-finish': [],
       'fetch-finish': [],
       remove: [],
-      'sort-change': []
+      'sort-change': [],
+      'html-load': []
     }
     this.args = {
       'fetch-start': [],
@@ -60,7 +61,8 @@ export class Subreddit {
       'fetch-post-finish': [],
       'fetch-finish': ['info'],
       remove: [],
-      'sort-change': ['sort']
+      'sort-change': ['sort'],
+      'html-load': []
     }
   }
 
@@ -173,10 +175,8 @@ export class Subreddit {
   }
 
   getHTMLElement() {
-    const element = document.createElement('div')
-    element.classList.add('subreddit')
-
-    this.htmlElement = element
+    this.htmlElement = document.createElement('div')
+    this.htmlElement.classList.add('subreddit')
 
     const removeButton = document.createElement('button')
     removeButton.className = 'remove'
@@ -184,21 +184,24 @@ export class Subreddit {
     removeButton.onclick = () => this.remove()
 
     if (this.err) {
-      element.innerHTML = `
+      this.htmlElement.innerHTML = `
 <div class="error">
   Error loading:
   <br />
   <b>r/${this.info.name}</b>
 </div>
 <div class="error-message">${this.err}</div>`
-      element.appendChild(removeButton)
-      return element
+      this.htmlElement.appendChild(removeButton)
+      return this.htmlElement
     }
 
-    element.innerHTML = `
+    this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  <img class="icon" src="${this.info.icon}" alt="r/" />
+  ${this.info.icon
+        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+        : `<div class="icon">r/</div>`
+      }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -206,7 +209,7 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
     fetchButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
     fetchButton.className = 'fetch'
     fetchButton.onclick = () => this.fetchData()
-    element.appendChild(fetchButton)
+    this.htmlElement.appendChild(fetchButton)
 
     const loadingSpinner = document.createElement('div')
     loadingSpinner.className = 'loading'
@@ -226,23 +229,26 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       e.stopPropagation()
     }
 
-    element.querySelector('.info').appendChild(menuButton)
+    this.htmlElement.querySelector('.info').appendChild(menuButton)
 
     menu.open = () => menu.classList.add('open')
     menu.close = () => menu.classList.remove('open')
 
     this.once('fetch-start', () => {
-      element.appendChild(loadingSpinner)
+      this.htmlElement.appendChild(loadingSpinner)
       fetchButton.remove()
     })
     this.once('fetch-finish', () => {
-      element.classList.add('loaded')
+      this.htmlElement.classList.add('loaded')
       loadingSpinner.remove()
 
-      element.innerHTML = `
+      this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  <img class="icon" src="${this.info.icon}" alt="r/" />
+  ${this.info.icon
+          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+          : `<div class="icon">r/</div>`
+        }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
@@ -257,22 +263,22 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
   ${this.posts.map((post) => post.getHTML()).join('')}
 </ul>`
 
-      element.querySelector('.info').appendChild(menuButton)
+      this.htmlElement.querySelector('.info').appendChild(menuButton)
 
       const loadPostButton = document.createElement('button')
       loadPostButton.innerText = 'Load more'
       loadPostButton.className = 'load'
       loadPostButton.onclick = () =>
         this.fetchPosts(this.posts[this.posts.length - 1].name)
-      element.querySelector('.posts').after(loadPostButton)
+      this.htmlElement.querySelector('.posts').after(loadPostButton)
 
       const refreshButton = document.createElement('button')
       refreshButton.innerHTML = '<i class="fa-solid fa-rotate-right"></i>'
       refreshButton.onclick = () => {
-        element.querySelector('.posts').innerHTML = ''
+        this.htmlElement.querySelector('.posts').innerHTML = ''
         this.fetchPosts()
       }
-      element.querySelector('.actions').appendChild(refreshButton)
+      this.htmlElement.querySelector('.actions').appendChild(refreshButton)
 
       const sortSelect = document.createElement('select')
       sortSelect.innerHTML = ['Hot', 'Top', 'New', 'Rising']
@@ -284,26 +290,28 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       sortSelect.onchange = () => {
         this.sort = sortSelect.value
         this.notify('sort-change')
-        element.querySelector('.posts').innerHTML = ''
+        this.htmlElement.querySelector('.posts').innerHTML = ''
         this.fetchPosts()
       }
-      element.querySelector('.select').prepend(sortSelect)
+      this.htmlElement.querySelector('.select').prepend(sortSelect)
 
       this.on('fetch-post-start', () => {
         loadPostButton.disabled = true
         loadPostButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
       })
       this.on('fetch-post-finish', () => {
-        element.querySelector('.posts').innerHTML = this.posts
+        this.htmlElement.querySelector('.posts').innerHTML = this.posts
           .map((post) => post.getHTML())
           .join('')
 
         loadPostButton.disabled = false
         loadPostButton.innerHTML = 'Load more'
       })
+
+      this.notify('html-load')
     })
 
-    return element
+    return this.htmlElement
   }
 }
 

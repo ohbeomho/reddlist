@@ -51,7 +51,7 @@ button.add,
 button.menu {
   padding: 0;
   text-align: center;
-  place-content: center;
+  align-content: center;
   border-radius: 50%;
 }
 
@@ -90,6 +90,7 @@ button.load {
 }
 
 main {
+  scroll-behavior: smooth;
   flex: 1;
   display: flex;
   padding: 1rem;
@@ -101,11 +102,13 @@ main {
 
 main>div:not(.subreddit) {
   text-align: center;
-  place-content: center;
+  align-content: center;
+  border: 2px solid transparent;
 }
 
 main>div {
   flex: 0 0 20rem;
+  box-sizing: border-box;
 }
 
 dialog.add {
@@ -202,7 +205,7 @@ dialog.add button {
 .subreddit:has(.error) {
   color: red;
   border-color: red;
-  place-content: center;
+  align-content: center;
   text-align: center;
 }
 
@@ -229,6 +232,8 @@ dialog.add button {
 }
 
 .subreddit .banner {
+  position: relative;
+  z-index: 1;
   height: 4rem;
   background-position: center;
   background-repeat: no-repeat;
@@ -326,6 +331,10 @@ dialog.add button {
   animation: spin 1s linear infinite;
 }
 
+.icons {
+  display: none;
+}
+
 @keyframes spin {
   0% {
     rotate: 0deg;
@@ -333,5 +342,46 @@ dialog.add button {
 
   100% {
     rotate: 360deg;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  main {
+    overflow: hidden;
+    padding-bottom: 4rem;
+  }
+
+  .icons {
+    display: flex;
+    position: fixed;
+    margin: 0 auto;
+    bottom: 1rem;
+    width: max-content;
+    left: calc(50% - 1rem);
+    overflow: hideen;
+    justify-content: center;
+    gap: 0.3rem;
+    align-items: center;
+    transition: all 0.3s;
+  }
+
+  .icons>* {
+    background-color: white;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid lightgray;
+    border-radius: 50%;
+    text-align: center;
+    align-content: center;
+  }
+
+  .icons>*.current {
+    scale: 1.1;
+    border-color: gray;
+  }
+
+  main>div {
+    flex: 0 0 calc(100vw - 2rem);
+    max-height: calc(100vh - 6rem);
   }
 }
