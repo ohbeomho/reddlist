@@ -27,9 +27,9 @@ function subredditEvents(subreddit) {
     save()
   })
   subreddit.on('remove', () => {
-    removeIcon(subreddits.indexOf(subreddit))
-    changeCurrentIcon()
+    removeIcon(currIdx)
     subreddits.splice(subreddits.indexOf(subreddit), 1)
+    changeCurrentIcon()
     localData = localData.filter(
       (data) => !equalsIgnoreCase(data.name, subreddit.info.name)
     )
