@@ -12,6 +12,7 @@ function subredditEvents(subreddit) {
     localData = localData.map((data) =>
       equalsIgnoreCase(data.name, name) ? { ...data, name, icon, banner } : data
     )
+    changeIcon(subreddit, subreddits.indexOf(subreddit))
     save()
   })
   subreddit.on('sort-change', (sort) => {
@@ -27,6 +28,7 @@ function subredditEvents(subreddit) {
     localData = localData.filter(
       (data) => !equalsIgnoreCase(data.name, subreddit.info.name)
     )
+    removeIcon(subreddits.indexOf(subreddit))
     save()
   })
 }
@@ -45,8 +47,48 @@ function save() {
 
 const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
 
+const main = document.querySelector('main')
 const addDialog = document.querySelector('dialog.add')
 const addButton = document.querySelector('button.add')
+const icons = document.querySelector('.icons')
+
+const addIconElement = document.createElement('div')
+addIconElement.innerText = '+'
+addIconElement.onclick = () => {
+  main.scroll(main.scrollWidth, 0)
+  currIdx = subreddits.length
+}
+icons.appendChild(addIconElement)
+
+const iconElements = []
+let lastCurrentElement,
+  currIdx = 0
+
+function addIcon(subreddit) {
+  const icon = subreddit.htmlElement.querySelector('.icon')
+  const newIcon = icon.cloneNode()
+  newIcon.innerHTML = icon.innerHTML
+  addIconElement.before(newIcon)
+  iconElements.push(newIcon)
+  newIcon.onclick = () => {
+    currIdx = iconElements.indexOf(newIcon)
+    main.scroll(subreddits[currIdx].htmlElement.offsetLeft - fontSize, 0)
+  }
+}
+
+function changeIcon(subreddit, idx) {
+  const icon = subreddit.htmlElement.querySelector('.icon')
+  const newIcon = icon.cloneNode()
+  newIcon.innerHTML = icon.innerHTML
+
+  iconElements[idx].replaceWith(newIcon)
+  iconElements.splice(idx, 1, newIcon)
+}
+
+function removeIcon(idx) {
+  iconElements[idx].remove()
+  iconElements.splice(idx, 1)
+}
 
 // Close the dialog when the outside of the dialog is clicked.
 addDialog.onclick = (e) =>
@@ -69,6 +111,7 @@ addDialog.querySelector('button').onclick = () => {
   document
     .querySelector('main>div:last-child')
     .before(newSubreddit.getHTMLElement())
+  addIcon(newSubreddit)
 
   document.querySelector('.message')?.remove()
   input.value = ''
@@ -89,7 +132,11 @@ window.onload = () => {
     document
       .querySelector('main>div:last-child')
       .before(subreddit.getHTMLElement())
+    addIcon(subreddit)
   })
+
+  iconElements[0].classList.add('current')
+  lastCurrentElement = iconElements[0]
 }
 
 window.onclick = () =>
@@ -111,13 +158,29 @@ if (window.innerWidth <= 500) {
 
     if (Math.abs(xdiff) < Math.abs(ydiff) || Math.abs(xdiff) < 50) return
 
-    const scrollAmount =
-      (window.innerWidth - fontSize) * (xdiff / Math.abs(xdiff))
-    document
-      .querySelector('main')
-      .scrollBy({ left: scrollAmount, top: 0, behavior: 'smooth' })
+    if (xdiff < 0 && currIdx > 0) currIdx--
+    else if (xdiff > 0 && currIdx < subreddits.length) currIdx++
+
+    main.scroll(
+      (currIdx < subreddits.length
+        ? subreddits[currIdx].htmlElement.offsetLeft
+        : main.scrollWidth) - fontSize,
+      0
+    )
 
     touchStart.x = -1
     touchStart.y = -1
+  }
+
+  main.onscroll = () => {
+    let newCurrent
+    if (currIdx >= subreddits.length) newCurrent = addIconElement
+    else newCurrent = iconElements[currIdx]
+
+    lastCurrentElement.classList.remove('current')
+    newCurrent.classList.add('current')
+    lastCurrentElement = newCurrent
+
+    icons.style.left = `calc(50% - ${newCurrent.offsetLeft}px - 1rem)`
   }
 }
