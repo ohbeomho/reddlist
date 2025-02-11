@@ -68,16 +68,22 @@ const iconElements = []
 let lastCurrentElement,
   currIdx = 0
 
+function addIconListener(icon) {
+  icon.onclick = () => {
+    currIdx = iconElements.indexOf(icon)
+    main.scroll(subreddits[currIdx].htmlElement.offsetLeft - fontSize, 0)
+  }
+}
+
 function addIcon(subreddit) {
   const icon = subreddit.htmlElement.querySelector('.icon')
   const newIcon = icon.cloneNode()
   newIcon.innerHTML = icon.innerHTML
+
   addIconElement.before(newIcon)
   iconElements.push(newIcon)
-  newIcon.onclick = () => {
-    currIdx = iconElements.indexOf(newIcon)
-    main.scroll(subreddits[currIdx].htmlElement.offsetLeft - fontSize, 0)
-  }
+
+  addIconListener(newIcon)
 }
 
 function changeIcon(subreddit, idx) {
@@ -87,6 +93,8 @@ function changeIcon(subreddit, idx) {
 
   iconElements[idx].replaceWith(newIcon)
   iconElements.splice(idx, 1, newIcon)
+
+  addIconListener(newIcon)
 }
 
 function removeIcon(idx) {
