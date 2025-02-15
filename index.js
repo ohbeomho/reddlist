@@ -53,6 +53,7 @@ const fontSize = parseFloat(getComputedStyle(document.documentElement).fontSize)
 
 const main = document.querySelector('main')
 const addDialog = document.querySelector('dialog.add')
+const postDialog = document.querySelector('dialog.post')
 const addButton = document.querySelector('button.add')
 const icons = document.querySelector('.icons')
 
@@ -115,13 +116,17 @@ function changeCurrentIcon() {
 }
 
 // Close the dialog when the outside of the dialog is clicked.
-addDialog.onclick = (e) =>
-  (e.offsetX < 0 ||
-    e.offsetY < 0 ||
-    e.offsetX > addDialog.clientWidth ||
-    e.offsetY > addDialog.clientHeight) &&
-  addDialog.close()
-addDialog.querySelector('button').onclick = () => {
+document.querySelectorAll('dialog').forEach((dialog) => {
+  dialog.onclick = (e) =>
+    (e.offsetX < 0 ||
+      e.offsetY < 0 ||
+      e.offsetX > dialog.clientWidth ||
+      e.offsetY > dialog.clientHeight) &&
+    dialog.close()
+  dialog.querySelector('button.close').onclick = () => dialog.close()
+})
+
+function addSubreddit() {
   const input = addDialog.querySelector('input')
   if (!input.value) return
 
@@ -142,7 +147,19 @@ addDialog.querySelector('button').onclick = () => {
   input.value = ''
   addDialog.close()
 }
-addButton.onclick = () => addDialog.showModal()
+
+addDialog.querySelector('button:not(.close)').onclick = addSubreddit
+addDialog.querySelector('input').onkeydown = (e) => {
+  if (e.key !== 'Enter') return
+
+  addSubreddit()
+  e.preventDefault()
+}
+
+addButton.onclick = () => {
+  addDialog.showModal()
+  addDialog.querySelector('input').focus()
+}
 
 window.onload = () => {
   main.scroll(0, 0)

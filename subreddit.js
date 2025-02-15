@@ -198,10 +198,11 @@ export class Subreddit {
     this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-        : `<div class="icon">r/</div>`
-      }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -245,10 +246,11 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-          : `<div class="icon">r/</div>`
-        }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
@@ -260,10 +262,12 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
   </div>
 </div>
 <ul class="posts">
-  ${this.posts.map((post) => post.getHTML()).join('')}
 </ul>`
 
       this.htmlElement.querySelector('.info').appendChild(menuButton)
+      this.htmlElement
+        .querySelector('.posts')
+        .append(...this.posts.map((post) => post.getHTMLElement()))
 
       const loadPostButton = document.createElement('button')
       loadPostButton.innerText = 'Load more'
@@ -300,9 +304,10 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
         loadPostButton.innerHTML = '<i class="fa-solid fa-spinner"></i>'
       })
       this.on('fetch-post-finish', () => {
-        this.htmlElement.querySelector('.posts').innerHTML = this.posts
-          .map((post) => post.getHTML())
-          .join('')
+        this.htmlElement.querySelector('.posts').innerHTML = ''
+        this.htmlElement
+          .querySelector('.posts')
+          .append(...this.posts.map((post) => post.getHTMLElement()))
 
         loadPostButton.disabled = false
         loadPostButton.innerHTML = 'Load more'
@@ -338,18 +343,25 @@ export class Post {
     this.timestampSec = timestampSec
   }
 
-  getHTML() {
-    return `
-  <li class="post">
-    <div class="info">
-      <a class="author" href="https://www.reddit.com/u/${this.author}" target="_blank">u/${this.author}</a>
-      <a class="title" href="https://www.reddit.com/r/${this.subreddit}/comments/${this.id}" target="_blank">${this.title}</a>
-      <div class="time">${formatDate(this.timestampSec).join(' ')} ago</div>
-    </div>
-    <div class="score">
-      <i class="fa-solid fa-angle-up"></i>
-      <div>${formatNumber(this.score)}</div>
-    </div>
-  </li>`
+  getHTMLElement() {
+    // Post link: https://www.reddit.com/r/${this.subreddit}/comments/${this.id}
+    // User link: https://www.reddit.com/u/${this.author}
+    const post = document.createElement('li')
+    post.className = 'post'
+    // TODO: Open post dialog
+    post.onclick = () => {}
+
+    post.innerHTML = `
+<div class="info">
+  <div class="author">u/${this.author}</div>
+  <div class="title">${this.title}</div>
+  <div class="time">${formatDate(this.timestampSec).join(' ')} ago</div>
+</div>
+<div class="score">
+  <i class="fa-solid fa-angle-up"></i>
+  <div>${formatNumber(this.score)}</div>
+</div>`
+
+    return post
   }
 }
