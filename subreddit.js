@@ -70,9 +70,9 @@ export class Subreddit {
     return { name: this.info.name, sort: this.sort }
   }
 
-  notify(event) {
+  notify(event, args) {
     this.listeners[event]?.forEach((listener) => {
-      listener(...this.args[event].map((argName) => this[argName]))
+      listener(...this.args[event].map((argName) => args[argName]))
 
       if (listener.once) this.removeListener(listener)
     })
@@ -165,7 +165,7 @@ export class Subreddit {
     } catch (err) {
       this.err = err
     } finally {
-      this.notify('fetch-finish')
+      this.notify('fetch-finish', { info: this.info })
     }
   }
 
@@ -293,7 +293,7 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
         .join('\n')
       sortSelect.onchange = () => {
         this.sort = sortSelect.value
-        this.notify('sort-change')
+        this.notify('sort-change', { sort: this.sort })
         this.htmlElement.querySelector('.posts').innerHTML = ''
         this.fetchPosts()
       }
