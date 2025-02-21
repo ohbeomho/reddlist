@@ -1,4 +1,4 @@
-const baseURL = 'https://api.reddit.com'
+export const baseURL = 'https://api.reddit.com'
 
 // 1000 -> 1K
 // 1000000 -> 1M
@@ -51,7 +51,8 @@ export class Subreddit {
       'fetch-finish': [],
       remove: [],
       'sort-change': [],
-      'html-load': []
+      'html-load': [],
+      'post-open': []
     }
     this.args = {
       'fetch-start': [],
@@ -62,7 +63,8 @@ export class Subreddit {
       'fetch-finish': ['info'],
       remove: [],
       'sort-change': ['sort'],
-      'html-load': []
+      'html-load': [],
+      'post-open': ['post']
     }
   }
 
@@ -109,7 +111,6 @@ export class Subreddit {
         const {
           title,
           id,
-          name,
           selftext: content,
           author,
           num_comments: commentCount,
@@ -117,10 +118,9 @@ export class Subreddit {
           created: timestampSec
         } = post.data
         return new Post(
-          this.info.name,
+          this,
           title,
           id,
-          name,
           content,
           author,
           commentCount,
@@ -198,11 +198,10 @@ export class Subreddit {
     this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${
-    this.info.icon
-      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-      : `<div class="icon">r/</div>`
-  }
+  ${this.info.icon
+        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+        : `<div class="icon">r/</div>`
+      }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -246,11 +245,10 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${
-    this.info.icon
-      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-      : `<div class="icon">r/</div>`
-  }
+  ${this.info.icon
+          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+          : `<div class="icon">r/</div>`
+        }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
@@ -325,7 +323,6 @@ export class Post {
     subreddit,
     title,
     id,
-    name,
     content,
     author,
     commentCount,
@@ -335,7 +332,6 @@ export class Post {
     this.subreddit = subreddit
     this.title = title
     this.id = id
-    this.name = name
     this.content = content
     this.author = author
     this.commentCount = commentCount
@@ -348,8 +344,7 @@ export class Post {
     // User link: https://www.reddit.com/u/${this.author}
     const post = document.createElement('li')
     post.className = 'post'
-    // TODO: Open post dialog
-    post.onclick = () => {}
+    post.onclick = () => this.subreddit.notify('post-open', { post: this })
 
     post.innerHTML = `
 <div class="info">
@@ -363,5 +358,16 @@ export class Post {
 </div>`
 
     return post
+  }
+}
+
+export class Comment {
+  constructor(id, content, author, score, replies, timestampSec) {
+    this.id = id
+    this.content = content
+    this.author = author
+    this.score = score
+    this.replies = replies
+    this.timestampSec = timestampSec
   }
 }

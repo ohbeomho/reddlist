@@ -1,4 +1,78 @@
-import { Subreddit } from './subreddit.js'
+import { Subreddit, Post, Comment, baseURL } from './subreddit.js'
+
+const postCache = {}
+
+async function loadPost(postId) {
+  if (postCache[postId]) return postCache[postId]
+
+  const res = await fetch(`${baseURL}/comments/${postId}`)
+  const data = await res.json()
+  const [post, comments] = data
+
+  const {
+    title,
+    id,
+    selftext: content,
+    author,
+    num_comments: commentCount,
+    score,
+    created: timestampSec
+  } = post.data.children[0].data
+
+  const parseReplies = (replies) => {
+    return replies
+      ? replies.data.children.map((reply) => {
+        const {
+          id,
+          body: content,
+          author,
+          score,
+          replies,
+          created: timestampSec
+        } = reply.data
+        return new Comment(
+          id,
+          content,
+          author,
+          score,
+          parseReplies(replies),
+          timestampSec
+        )
+      })
+      : []
+  }
+
+  return {
+    post: new Post(
+      null,
+      title,
+      id,
+      content,
+      author,
+      commentCount,
+      score,
+      timestampSec
+    ),
+    comments: comments.data.children.map((comment) => {
+      const {
+        id,
+        body: content,
+        author,
+        score,
+        replies,
+        created: timestampSec
+      } = comment.data
+      return new Comment(
+        id,
+        content,
+        author,
+        score,
+        parseReplies(replies),
+        timestampSec
+      )
+    })
+  }
+}
 
 function equalsIgnoreCase(str1, str2) {
   if (typeof str1 !== 'string' || typeof str2 !== 'string')
@@ -34,6 +108,18 @@ function subredditEvents(subreddit) {
       (data) => !equalsIgnoreCase(data.name, subreddit.info.name)
     )
     save()
+  })
+  subreddit.on('post-open', (post) => {
+    postDialog.showModal()
+
+    loadPost(post.id)
+      .then((postData) => {
+        // TODO: Show post
+        console.log(postData)
+      })
+      .catch((err) => {
+        // TODO: Show error message
+      })
   })
 }
 
