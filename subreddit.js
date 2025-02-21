@@ -355,7 +355,7 @@ export class Post {
 <div class="info">
   <div class="author">u/${this.author}</div>
   <div class="title">${this.title}</div>
-  <div class="time">${formatDate(this.timestampSec).join(' ')} ago</div>
+  <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec).join(' ')} ago</div>
 </div>
 <div class="score">
   <i class="fa-solid fa-angle-up"></i>

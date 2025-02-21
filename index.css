@@ -274,16 +274,18 @@ dialog.post {
 }
 
 .subreddit .post .author {
-  color: black;
+  font-size: 0.9rem;
 }
 
 .subreddit .post .title {
   display: block;
+  font-size: 1.1rem;
   line-break: anywhere;
   margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
 }
 
-.subreddit .post .time {
+.subreddit .post .comments-time {
   font-size: 0.8rem;
   color: gray;
 }
