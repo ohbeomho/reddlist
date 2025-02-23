@@ -2,76 +2,64 @@ import { Subreddit, Post, Comment, baseURL } from './subreddit.js'
 
 const postCache = {}
 
-async function loadPost(postId) {
+function unescapeHTML(html) {
+  return html
+    .replaceAll('&amp;', '&')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replace(/&#0?39;/g, "'")
+}
+
+async function loadComments(postId) {
   if (postCache[postId]) return postCache[postId]
 
   const res = await fetch(`${baseURL}/comments/${postId}`)
   const data = await res.json()
-  const [post, comments] = data
-
-  const {
-    title,
-    id,
-    selftext: content,
-    author,
-    num_comments: commentCount,
-    score,
-    created: timestampSec
-  } = post.data.children[0].data
+  const comments = data[1]
 
   const parseReplies = (replies) => {
     return replies
       ? replies.data.children.map((reply) => {
-        const {
-          id,
-          body: content,
-          author,
-          score,
-          replies,
-          created: timestampSec
-        } = reply.data
-        return new Comment(
-          id,
-          content,
-          author,
-          score,
-          parseReplies(replies),
-          timestampSec
-        )
-      })
+          const {
+            id,
+            body: content,
+            author,
+            score,
+            replies,
+            created: timestampSec
+          } = reply.data
+          return new Comment(
+            id,
+            content,
+            author,
+            score,
+            parseReplies(replies),
+            timestampSec
+          )
+        })
       : []
   }
 
-  return {
-    post: new Post(
-      null,
-      title,
+  return comments.data.children.map((comment) => {
+    const {
+      id,
+      body: content,
+      author,
+      score,
+      replies,
+      created: timestampSec
+    } = comment.data
+    return new Comment(
       id,
       content,
       author,
-      commentCount,
       score,
+      parseReplies(replies),
       timestampSec
-    ),
-    comments: comments.data.children.map((comment) => {
-      const {
-        id,
-        body: content,
-        author,
-        score,
-        replies,
-        created: timestampSec
-      } = comment.data
-      return new Comment(
-        id,
-        content,
-        author,
-        score,
-        parseReplies(replies),
-        timestampSec
-      )
-    })
-  }
+    )
+  })
 }
 
 function equalsIgnoreCase(str1, str2) {
@@ -110,16 +98,22 @@ function subredditEvents(subreddit) {
     save()
   })
   subreddit.on('post-open', (post) => {
-    postDialog.showModal()
+    const content = postDialog.querySelector('.content')
+    const commentList = postDialog.querySelector('.comments')
 
-    loadPost(post.id)
-      .then((postData) => {
-        // TODO: Show post
-        console.log(postData)
+    content.innerHTML = `
+<a href="${post.url}" target="_blank">View on reddit</a>
+<h1>${post.title}</h1>
+${post.type === 'image' ? `<div><img src="${post.content.image}" /></div>` : ''}
+${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
+
+    loadComments(post.id)
+      .then((comments) => {
+        console.log(comments)
       })
-      .catch((err) => {
-        // TODO: Show error message
-      })
+      .catch((err) => {})
+
+    postDialog.showModal()
   })
 }
 
@@ -203,12 +197,15 @@ function changeCurrentIcon() {
 
 // Close the dialog when the outside of the dialog is clicked.
 document.querySelectorAll('dialog').forEach((dialog) => {
-  dialog.onclick = (e) =>
-    (e.offsetX < 0 ||
+  dialog.onclick = (e) => {
+    if (
+      e.offsetX < 0 ||
       e.offsetY < 0 ||
       e.offsetX > dialog.clientWidth ||
-      e.offsetY > dialog.clientHeight) &&
-    dialog.close()
+      e.offsetY > dialog.clientHeight
+    )
+      dialog.close()
+  }
   dialog.querySelector('button.close').onclick = () => dialog.close()
 })
 

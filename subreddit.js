@@ -111,20 +111,50 @@ export class Subreddit {
         const {
           title,
           id,
-          selftext: content,
+          selftext_html: text,
           author,
           num_comments: commentCount,
           score,
-          created: timestampSec
+          thumbnail,
+          created: timestampSec,
+          post_hint,
+          is_gallery,
+          is_video,
+          poll_data,
+          crosspost_parent,
+          is_self,
+          media_metadata,
+          permalink
         } = post.data
+
+        let type = 'link'
+        if (post_hint === 'image') type = 'image'
+        else if (is_gallery) type = 'gallery'
+        else if (is_video) type = 'video'
+        else if (poll_data) type = 'poll'
+        else if (crosspost_parent) type = 'crosspost'
+        else if (is_self) type = 'text'
+
         return new Post(
           this,
           title,
           id,
-          content,
+          type,
+          {
+            text,
+            image:
+              type === 'image'
+                ? media_metadata
+                  ? `https://preview.redd.it/${Object.keys(media_metadata)[0]}.${media_metadata.m.split('/')[1]}`
+                  : post.data.url_overridden_by_dest
+                : null
+            // TODO: Add other content based on type
+          },
           author,
           commentCount,
           score,
+          thumbnail,
+          `https://www.reddit.com${permalink}`,
           timestampSec
         )
       })
@@ -198,10 +228,11 @@ export class Subreddit {
     this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-        : `<div class="icon">r/</div>`
-      }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -245,10 +276,11 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-          : `<div class="icon">r/</div>`
-        }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
@@ -323,19 +355,25 @@ export class Post {
     subreddit,
     title,
     id,
+    type,
     content,
     author,
     commentCount,
     score,
+    thumbnail,
+    url,
     timestampSec
   ) {
     this.subreddit = subreddit
     this.title = title
     this.id = id
+    this.type = type
     this.content = content
     this.author = author
     this.commentCount = commentCount
     this.score = score
+    this.thumbnail = thumbnail
+    this.url = url
     this.timestampSec = timestampSec
   }
 

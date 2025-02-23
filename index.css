@@ -86,13 +86,10 @@ div.menu button.remove:hover {
 }
 
 button.close {
-  position: absolute;
   background-color: transparent;
   width: 1.2rem;
   height: 1.2rem;
   border-radius: 50%;
-  top: 0;
-  right: 0;
 }
 
 button.load {
@@ -128,6 +125,14 @@ dialog {
   border-radius: 0.5rem;
 }
 
+dialog .top {
+  text-align: right;
+}
+
+dialog .top button {
+  text-align: center;
+}
+
 dialog::backdrop {
   background-color: rgba(0, 0, 0, 0.4);
 }
@@ -146,7 +151,21 @@ dialog.add input:focus {
 }
 
 dialog.post {
-  width: min(100vw);
+  width: min(100vw, 50rem);
+}
+
+dialog.post .content {
+  text-align: left;
+}
+
+dialog.post .content img {
+  height: 50vh;
+  display: block;
+  margin: auto;
+}
+
+dialog.post .content div:has(img) {
+  background-color: rgba(0, 0, 0, 0.2);
 }
 
 .subreddit {
@@ -214,7 +233,6 @@ dialog.post {
 }
 
 .subreddit:has(.error) {
-  color: red;
   border-color: red;
   align-content: center;
   text-align: center;
@@ -297,6 +315,10 @@ dialog.post {
 }
 
 .error {
+  color: red;
+}
+
+.subreddit .error {
   font-size: 1.4rem;
 }
 
@@ -304,7 +326,7 @@ dialog.post {
   color: black;
 }
 
-.error-message {
+.subreddit .error-message {
   text-align: left;
   padding: 2rem 0;
 }
