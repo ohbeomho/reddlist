@@ -1,8 +1,10 @@
-import { Subreddit, Post, Comment, baseURL } from './subreddit.js'
+import { Subreddit, Comment, baseURL } from './subreddit.js'
 
-const postCache = {}
+const loadedComments = {}
 
 function unescapeHTML(html) {
+  // replacing &amp; twice because sometimes there is &amp;amp;
+  // why reddit??
   return html
     .replaceAll('&amp;', '&')
     .replaceAll('&amp;', '&')
@@ -12,54 +14,46 @@ function unescapeHTML(html) {
     .replace(/&#0?39;/g, "'")
 }
 
-async function loadComments(postId) {
-  if (postCache[postId]) return postCache[postId]
+async function loadComments(post) {
+  if (!loadedComments[post.id]) {
+    const res = await fetch(`${baseURL}/comments/${post.id}?depth=3&limit=30`)
+    const data = await res.json()
+    const comments = data[1]
 
-  const res = await fetch(`${baseURL}/comments/${postId}`)
-  const data = await res.json()
-  const comments = data[1]
+    const parseComments = (comments) => {
+      return comments
+        ? comments.data.children
+            .map((comment) => {
+              const {
+                id,
+                body: content,
+                author,
+                score,
+                replies,
+                created: timestampSec,
+                children
+              } = comment.data
+              return new Comment(
+                post,
+                children ? '_' : id,
+                content,
+                author,
+                score,
+                parseComments(replies),
+                timestampSec
+              )
+            })
+            .filter((comment) => comment !== null)
+        : []
+    }
 
-  const parseReplies = (replies) => {
-    return replies
-      ? replies.data.children.map((reply) => {
-          const {
-            id,
-            body: content,
-            author,
-            score,
-            replies,
-            created: timestampSec
-          } = reply.data
-          return new Comment(
-            id,
-            content,
-            author,
-            score,
-            parseReplies(replies),
-            timestampSec
-          )
-        })
-      : []
+    loadedComments[post.id] = parseComments(comments)
+
+    // Delete data from loadedComments after 5 min
+    setTimeout(() => delete loadedComments[post.id], 1000 * 60 * 5)
   }
 
-  return comments.data.children.map((comment) => {
-    const {
-      id,
-      body: content,
-      author,
-      score,
-      replies,
-      created: timestampSec
-    } = comment.data
-    return new Comment(
-      id,
-      content,
-      author,
-      score,
-      parseReplies(replies),
-      timestampSec
-    )
-  })
+  return loadedComments[post.id]
 }
 
 function equalsIgnoreCase(str1, str2) {
@@ -101,17 +95,44 @@ function subredditEvents(subreddit) {
     const content = postDialog.querySelector('.content')
     const commentList = postDialog.querySelector('.comments')
 
+    commentList.innerHTML = ''
     content.innerHTML = `
 <a href="${post.url}" target="_blank">View on reddit</a>
 <h1>${post.title}</h1>
-${post.type === 'image' ? `<div><img src="${post.content.image}" /></div>` : ''}
+${post.type === 'image' ? `<div><img src="${post.content.image}" alt="post image" /></div>` : ''}
 ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
+    content.querySelectorAll('img').forEach((img) => {
+      img.onload = () => {
+        const isWide = img.width > img.height
+        img.parentElement.style[isWide ? 'width' : 'height'] = isWide
+          ? '100%'
+          : '50vh'
+        img.style[isWide ? 'width' : 'height'] = '100%'
+      }
+    })
+    // TODO: Add post score
 
-    loadComments(post.id)
-      .then((comments) => {
-        console.log(comments)
-      })
-      .catch((err) => {})
+    const setCommentList = (comments) => {
+      // TODO: Add sort option, comment count, refresh button at top
+      commentList.append(
+        ...comments.flatMap((comment) => comment.getHTMLElements())
+      )
+    }
+    const handleError = (err) => {
+      console.error(err)
+    }
+
+    if (!loadedComments[post.id]) {
+      const loadButton = document.createElement('button')
+      loadButton.innerText = 'Load comments'
+      loadButton.onclick = () => {
+        li.remove()
+        loadComments(post).then(setCommentList).catch(handleError)
+      }
+      const li = document.createElement('li')
+      li.appendChild(loadButton)
+      commentList.appendChild(li)
+    } else loadComments(post).then(setCommentList)
 
     postDialog.showModal()
   })
@@ -195,19 +216,12 @@ function changeCurrentIcon() {
   icons.style.left = `calc(50% - ${newCurrent.offsetLeft}px - 1rem)`
 }
 
-// Close the dialog when the outside of the dialog is clicked.
-document.querySelectorAll('dialog').forEach((dialog) => {
-  dialog.onclick = (e) => {
-    if (
-      e.offsetX < 0 ||
-      e.offsetY < 0 ||
-      e.offsetX > dialog.clientWidth ||
-      e.offsetY > dialog.clientHeight
-    )
-      dialog.close()
-  }
-  dialog.querySelector('button.close').onclick = () => dialog.close()
-})
+document
+  .querySelectorAll('dialog')
+  .forEach(
+    (dialog) =>
+      (dialog.querySelector('button.close').onclick = () => dialog.close())
+  )
 
 function addSubreddit() {
   const input = addDialog.querySelector('input')

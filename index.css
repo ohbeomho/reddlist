@@ -29,6 +29,12 @@ select {
   transition: all 0.3s;
 }
 
+ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 button,
 .select {
   user-select: none;
@@ -85,9 +91,14 @@ div.menu button.remove:hover {
 }
 
 button.close {
+  display: inline-flex;
   background-color: transparent;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 1.2rem;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
   border-radius: 50%;
 }
 
@@ -120,10 +131,16 @@ main>div {
 
 dialog {
   text-align: center;
+  position: relative;
+  padding-top: 0;
   border: 2px solid lightgray;
 }
 
 dialog .top {
+  position: sticky;
+  top: 0;
+  padding: 4px 0;
+  background-color: white;
   text-align: right;
 }
 
@@ -148,17 +165,22 @@ dialog.post {
 }
 
 dialog.post .content {
+  word-break: break-word;
   text-align: left;
 }
 
 dialog.post .content img {
-  height: 50vh;
   display: block;
   margin: auto;
 }
 
 dialog.post .content div:has(img) {
   background-color: rgba(0, 0, 0, 0.2);
+}
+
+dialog.post .comments {
+  padding-top: 1rem;
+  text-align: left;
 }
 
 .subreddit {
@@ -262,44 +284,54 @@ dialog.post .content div:has(img) {
 
 .subreddit .posts {
   padding: 0.5rem 0;
-  margin: 0;
-  list-style: none;
 }
 
-.subreddit .post {
+.subreddit .post,
+dialog.post .comment {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
   padding: 0.5rem;
-  border-bottom: 2px solid lightgray;
+}
+
+dialog.post .comment {
+  background-color: white;
+  border: 2px solid lightgray;
+  border-right-color: transparent;
+  margin-top: -2px;
+}
+
+.subreddit .post {
   transition: all 0.3s;
   user-select: none;
   cursor: pointer;
+  border-bottom: 2px solid lightgray;
 }
 
 .subreddit .post:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.subreddit .post .author {
+.author {
   font-size: 0.9rem;
 }
 
 .subreddit .post .title {
   display: block;
   font-size: 1.1rem;
-  line-break: anywhere;
+  word-break: break-word;
   margin-top: 0.5rem;
   margin-bottom: 0.2rem;
 }
 
-.subreddit .post .comments-time {
+.comments-time,
+.time {
   font-size: 0.8rem;
   color: gray;
 }
 
-.subreddit .post .score {
+.score {
   text-align: center;
   color: orangered;
   min-width: 3rem;
@@ -331,6 +363,7 @@ dialog.post .content div:has(img) {
   position: relative;
   display: inline-flex;
   align-items: center;
+  transition: all 0.3s;
 }
 
 .select i {
