@@ -35,7 +35,6 @@ button,
   cursor: pointer;
   background-color: lightgray;
   padding: 0.4rem;
-  border-radius: 0.5rem;
 }
 
 button:hover,
@@ -122,15 +121,10 @@ main>div {
 dialog {
   text-align: center;
   border: 2px solid lightgray;
-  border-radius: 0.5rem;
 }
 
 dialog .top {
   text-align: right;
-}
-
-dialog .top button {
-  text-align: center;
 }
 
 dialog::backdrop {
@@ -141,7 +135,6 @@ dialog.add input {
   text-align: left;
   margin: 0.2rem;
   padding: 0.4rem;
-  border-radius: 0.5rem;
   border: 2px solid lightgray;
 }
 
@@ -170,7 +163,6 @@ dialog.post .content div:has(img) {
 
 .subreddit {
   overflow: auto;
-  border-radius: 0.5rem;
   border: 2px solid lightgray;
   transition: all 0.3s;
   position: relative;
@@ -220,7 +212,6 @@ dialog.post .content div:has(img) {
   justify-content: center;
   align-items: stretch;
   padding: 0.4rem 0;
-  border-radius: 0.4rem;
   background-color: white;
   top: 2.1rem;
   right: 0;
