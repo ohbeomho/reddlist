@@ -3,8 +3,8 @@ import { Subreddit, Comment, baseURL } from './subreddit.js'
 const loadedComments = {}
 
 function unescapeHTML(html) {
-  // replacing &amp; twice because sometimes there is &amp;amp;
-  // why reddit??
+  // replacing &amp; twice because links in selftext
+  // already has &amp; so in selftext_html it becomes &amp;amp;
   return html
     .replaceAll('&amp;', '&')
     .replaceAll('&amp;', '&')
@@ -100,14 +100,32 @@ function subredditEvents(subreddit) {
 <a href="${post.url}" target="_blank">View on reddit</a>
 <h1>${post.title}</h1>
 ${post.type === 'image' ? `<div><img src="${post.content.image}" alt="post image" /></div>` : ''}
+${post.type === 'video' ? `<div><video controls src="${post.content.video}"></video></div>` : ''}
 ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
-    content.querySelectorAll('img').forEach((img) => {
-      img.onload = () => {
-        const isWide = img.width > img.height
-        img.parentElement.style[isWide ? 'width' : 'height'] = isWide
+    content.querySelectorAll('img,video').forEach((mediaElement) => {
+      let loadEvent = 'onload',
+        width = 'width',
+        height = 'height'
+      const node = mediaElement.nodeName.toLowerCase()
+
+      if (node === 'video') {
+        loadEvent = 'oncanplay'
+        width = 'videoWidth'
+        height = 'videoHeight'
+      }
+
+      mediaElement[loadEvent] = () => {
+        const isWide = mediaElement[width] > mediaElement[height]
+        mediaElement.parentElement.style[isWide ? 'width' : 'height'] = isWide
           ? '100%'
           : '50vh'
-        img.style[isWide ? 'width' : 'height'] = '100%'
+        if (node === 'img')
+          mediaElement.style[isWide ? 'width' : 'height'] = '100%'
+        else if (node === 'video') {
+          mediaElement[isWide ? 'width' : 'height'] =
+            mediaElement.parentElement[isWide ? 'clientWidth' : 'clientHeight']
+          console.log(mediaElement.width, mediaElement.height)
+        }
       }
     })
     // TODO: Add post score

@@ -126,8 +126,9 @@ export class Subreddit {
           poll_data,
           crosspost_parent,
           is_self,
-          media_metadata,
-          permalink
+          media,
+          permalink,
+          name
         } = post.data
 
         let type = 'link'
@@ -142,15 +143,12 @@ export class Subreddit {
           this,
           title,
           id,
+          name,
           type,
           {
             text,
-            image:
-              type === 'image'
-                ? media_metadata
-                  ? `https://preview.redd.it/${Object.keys(media_metadata)[0]}.${media_metadata.m.split('/')[1]}`
-                  : post.data.url_overridden_by_dest
-                : null
+            image: type === 'image' ? post.data.url_overridden_by_dest : null,
+            video: type === 'video' ? media.reddit_video.fallback_url : null
             // TODO: Add other content based on type
           },
           author,
@@ -357,6 +355,7 @@ export class Post {
     subreddit,
     title,
     id,
+    name,
     type,
     content,
     author,
@@ -369,6 +368,7 @@ export class Post {
     this.subreddit = subreddit
     this.title = title
     this.id = id
+    this.name = name
     this.type = type
     this.content = content
     this.author = author
@@ -388,6 +388,7 @@ export class Post {
 <div class="info">
   <div class="author">u/${this.author}</div>
   <div class="title">${this.title}</div>
+  ${this.type !== 'text' ? `<div class="type">${this.type}</div>` : ''}
   <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec)}</div>
 </div>
 <div class="score">

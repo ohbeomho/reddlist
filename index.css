@@ -140,6 +140,7 @@ dialog .top {
   position: sticky;
   top: 0;
   padding: 4px 0;
+  z-index: 1000;
   background-color: white;
   text-align: right;
 }
@@ -169,12 +170,13 @@ dialog.post .content {
   text-align: left;
 }
 
-dialog.post .content img {
+dialog.post .content img,
+dialog.post .content video {
   display: block;
   margin: auto;
 }
 
-dialog.post .content div:has(img) {
+dialog.post .content div:has(img, video) {
   background-color: rgba(0, 0, 0, 0.2);
 }
 
@@ -323,6 +325,14 @@ dialog.post .comment {
   word-break: break-word;
   margin-top: 0.5rem;
   margin-bottom: 0.2rem;
+}
+
+.subreddit .post .type {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  background-color: rgb(180, 180, 180);
+  border-radius: 0.6rem;
 }
 
 .comments-time,
