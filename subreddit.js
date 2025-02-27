@@ -148,7 +148,14 @@ export class Subreddit {
           {
             text,
             image: type === 'image' ? post.data.url_overridden_by_dest : null,
-            video: type === 'video' ? media.reddit_video.fallback_url : null
+            video:
+              type === 'video'
+                ? (({ hls_url, dash_url, fallback_url }) => ({
+                    hls_url,
+                    dash_url,
+                    fallback_url
+                  }))(media.reddit_video)
+                : null
             // TODO: Add other content based on type
           },
           author,

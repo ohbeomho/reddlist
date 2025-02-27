@@ -100,8 +100,15 @@ function subredditEvents(subreddit) {
 <a href="${post.url}" target="_blank">View on reddit</a>
 <h1>${post.title}</h1>
 ${post.type === 'image' ? `<div><img src="${post.content.image}" alt="post image" /></div>` : ''}
-${post.type === 'video' ? `<div><video controls src="${post.content.video}"></video></div>` : ''}
+${
+  post.type === 'video'
+    ? `<div><video controls>${Object.values(post.content.video)
+        .map((videoUrl) => `<source src="${unescapeHTML(videoUrl)}" />`)
+        .join('')}</video></div>`
+    : ''
+}
 ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
+
     content.querySelectorAll('img,video').forEach((mediaElement) => {
       let loadEvent = 'onload',
         width = 'width',
@@ -121,11 +128,9 @@ ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
           : '50vh'
         if (node === 'img')
           mediaElement.style[isWide ? 'width' : 'height'] = '100%'
-        else if (node === 'video') {
+        else if (node === 'video')
           mediaElement[isWide ? 'width' : 'height'] =
             mediaElement.parentElement[isWide ? 'clientWidth' : 'clientHeight']
-          console.log(mediaElement.width, mediaElement.height)
-        }
       }
     })
     // TODO: Add post score
