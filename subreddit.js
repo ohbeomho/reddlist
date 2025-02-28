@@ -151,11 +151,11 @@ export class Subreddit {
             image: type === 'image' ? url_overridden_by_dest : null,
             video:
               type === 'video'
-                ? (({ hls_url, dash_url, fallback_url }) => ({
-                    hls_url,
-                    dash_url,
-                    fallback_url
-                  }))(media.reddit_video)
+                ? Object.entries(media.reddit_video)
+                    .filter(([key, _]) =>
+                      ['hls_url', 'dash_url', 'fallback_url'].includes(key)
+                    )
+                    .map(([_, value]) => value)
                 : null,
             link: url_overridden_by_dest
             // TODO: Add other content based on type

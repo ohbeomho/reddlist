@@ -104,7 +104,7 @@ function subredditEvents(subreddit) {
   ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
   ${
     post.type === 'video'
-      ? `<video controls>${Object.values(post.content.video)
+      ? `<video controls>${post.content.video
           .map((videoUrl) => `<source src="${unescapeHTML(videoUrl)}" />`)
           .join('')}</video>`
       : ''
