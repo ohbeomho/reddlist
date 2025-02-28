@@ -101,6 +101,7 @@ function subredditEvents(subreddit) {
 <h1>${post.title}</h1>
 <div>
   ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
+  ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<div><img src="${imageUrl}" alt="post image" /></div>`).join('')}` : ''}
   ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
   ${
     post.type === 'video'
