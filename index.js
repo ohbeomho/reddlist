@@ -99,14 +99,17 @@ function subredditEvents(subreddit) {
     content.innerHTML = `
 <a href="${post.url}" target="_blank">View on reddit</a>
 <h1>${post.title}</h1>
-${post.type === 'image' ? `<div><img src="${post.content.image}" alt="post image" /></div>` : ''}
-${
-  post.type === 'video'
-    ? `<div><video controls>${Object.values(post.content.video)
-        .map((videoUrl) => `<source src="${unescapeHTML(videoUrl)}" />`)
-        .join('')}</video></div>`
-    : ''
-}
+<div>
+  ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
+  ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
+  ${
+    post.type === 'video'
+      ? `<video controls>${Object.values(post.content.video)
+          .map((videoUrl) => `<source src="${unescapeHTML(videoUrl)}" />`)
+          .join('')}</video>`
+      : ''
+  }
+</div>
 ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
 
     content.querySelectorAll('img,video').forEach((mediaElement) => {

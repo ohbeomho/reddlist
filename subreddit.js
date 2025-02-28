@@ -128,7 +128,8 @@ export class Subreddit {
           is_self,
           media,
           permalink,
-          name
+          name,
+          url_overridden_by_dest
         } = post.data
 
         let type = 'link'
@@ -147,7 +148,7 @@ export class Subreddit {
           type,
           {
             text,
-            image: type === 'image' ? post.data.url_overridden_by_dest : null,
+            image: type === 'image' ? url_overridden_by_dest : null,
             video:
               type === 'video'
                 ? (({ hls_url, dash_url, fallback_url }) => ({
@@ -155,7 +156,8 @@ export class Subreddit {
                     dash_url,
                     fallback_url
                   }))(media.reddit_video)
-                : null
+                : null,
+            link: url_overridden_by_dest
             // TODO: Add other content based on type
           },
           author,
