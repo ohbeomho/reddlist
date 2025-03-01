@@ -3,7 +3,7 @@ export const baseURL = 'https://api.reddit.com'
 // 1000 -> 1K
 // 1000000 -> 1M
 // 1000000000 -> 1B
-function formatNumber(num) {
+export function formatNumber(num) {
   if (typeof num !== 'number') return 'NaN'
 
   let n = 0
@@ -21,7 +21,7 @@ function formatNumber(num) {
 }
 
 // Relative time format
-function formatDate(timestampSec) {
+export function formatDate(timestampSec) {
   if (typeof timestampSec !== 'number') return 'NaN'
 
   const now = Math.floor(Date.now() / 1000)
@@ -109,66 +109,75 @@ export class Subreddit {
     )
     const parsed = await response.json()
 
-    this.posts.push(
-      ...parsed.data.children.map((post) => {
-        const {
-          title,
-          id,
-          selftext_html: text,
-          author,
-          num_comments: commentCount,
-          score,
-          thumbnail,
-          created: timestampSec,
-          post_hint,
-          is_gallery,
-          is_video,
-          poll_data,
-          crosspost_parent,
-          is_self,
-          media,
-          media_metadata,
-          permalink,
-          name,
-          url_overridden_by_dest
-        } = post.data
+    const parsePostData = (postData) => {
+      const {
+        title,
+        id,
+        selftext_html: text,
+        author,
+        num_comments: commentCount,
+        score,
+        thumbnail,
+        created: timestampSec,
+        post_hint,
+        is_gallery,
+        is_video,
+        poll_data,
+        crosspost_parent,
+        crosspost_parent_list,
+        is_self,
+        media,
+        media_metadata,
+        permalink,
+        name,
+        url_overridden_by_dest
+      } = postData
 
-        let type = 'link'
-        if (post_hint === 'image') type = 'image'
-        else if (is_gallery) type = 'gallery'
-        else if (is_video) type = 'video'
-        else if (poll_data) type = 'poll'
-        else if (crosspost_parent) type = 'crosspost'
-        else if (is_self) type = 'text'
+      let type = 'link'
+      if (post_hint === 'image') type = 'image'
+      else if (is_gallery) type = 'gallery'
+      else if (is_video) type = 'video'
+      else if (poll_data) type = 'poll'
+      else if (crosspost_parent) type = 'crosspost'
+      else if (is_self) type = 'text'
 
-        return new Post(
-          this,
-          title,
-          id,
-          name,
-          type,
-          {
-            text,
-            image: type === 'image' ? url_overridden_by_dest : null,
-            video:
-              type === 'video'
-                ? Object.entries(media.reddit_video)
+      return new Post(
+        this,
+        title,
+        id,
+        name,
+        type,
+        {
+          text,
+          image: type === 'image' ? url_overridden_by_dest : null,
+          video:
+            type === 'video'
+              ? Object.entries(media.reddit_video)
                   .filter(([key, _]) =>
                     ['hls_url', 'dash_url', 'fallback_url'].includes(key)
                   )
                   .map(([_, value]) => value)
-                : null,
-            link: url_overridden_by_dest,
-            gallery: media_metadata ? Object.values(media_metadata).map(({ s }) => s?.u) : null
-          },
-          author,
-          commentCount,
-          score,
-          thumbnail,
-          `https://www.reddit.com${permalink}`,
-          timestampSec
-        )
-      })
+              : null,
+          link: url_overridden_by_dest,
+          gallery: media_metadata
+            ? Object.values(media_metadata).map(({ s }) => s?.u)
+            : null,
+          crosspost:
+            type === 'crosspost'
+              ? parsePostData(crosspost_parent_list[0])
+              : null
+        },
+        author,
+        commentCount,
+        score,
+        thumbnail,
+        `https://www.reddit.com${permalink}`,
+        timestampSec
+      )
+    }
+
+    this.posts.push(
+      ...parsed.data.children.map((post) => parsePostData(post.data))
     )
 
     this.notify('fetch-post-finish')
@@ -238,10 +247,11 @@ export class Subreddit {
     this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-        : `<div class="icon">r/</div>`
-      }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -285,10 +295,11 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${this.info.icon
-          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-          : `<div class="icon">r/</div>`
-        }
+  ${
+    this.info.icon
+      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+      : `<div class="icon">r/</div>`
+  }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">
@@ -396,7 +407,7 @@ export class Post {
 <div class="info">
   <div class="author">u/${this.author}</div>
   <div class="title">${this.title}</div>
-  ${this.type !== 'text' ? `<div class="type">${this.type}</div>` : ''}
+  ${this.type !== 'text' ? `<div class="post-type">${this.type}</div>` : ''}
   <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec)}</div>
 </div>
 <div class="score">
@@ -419,9 +430,7 @@ export class Comment {
     this.timestampSec = timestampSec
   }
 
-  getHTMLElements(depth, parentComment) {
-    if (!depth) depth = 0
-
+  getHTMLElements(depth = 0, parentComment) {
     const comment = document.createElement('li')
     comment.className = 'comment'
     comment.style.marginLeft = `${depth}rem`

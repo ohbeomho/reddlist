@@ -1,4 +1,4 @@
-import { Subreddit, Comment, baseURL } from './subreddit.js'
+import { Subreddit, Comment, baseURL, formatDate } from './subreddit.js'
 
 const loadedComments = {}
 
@@ -95,13 +95,18 @@ function subredditEvents(subreddit) {
     const content = postDialog.querySelector('.content')
     const commentList = postDialog.querySelector('.comments')
 
-    commentList.innerHTML = ''
-    content.innerHTML = `
-<a href="${post.url}" target="_blank">View on reddit</a>
+    const getPostHTML = (post) => {
+      return `
+<a class="reddit" href="${post.url}" target="_blank"><i class="fa-brands fa-reddit-alien"></i> View on reddit</a>
 <h1>${post.title}</h1>
-<div>
+<div class="info">
+  <div class="author"><a href="https://www.reddit.com/user/${post.author}" target="_blank">u/${post.author}</a></div>
+  <div class="time">${formatDate(post.timestampSec)}</div>
+  <div class="post-type">${post.type}</div>
+</div>
+<div style="font-size: ${post.type === 'crosspost' ? 0.8 : 1}rem">
   ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
-  ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<div><img src="${imageUrl}" alt="post image" /></div>`).join('')}` : ''}
+  ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<img src="${imageUrl}" alt="post image" />`).join('')}` : ''}
   ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
   ${
     post.type === 'video'
@@ -110,8 +115,13 @@ function subredditEvents(subreddit) {
           .join('')}</video>`
       : ''
   }
+  ${post.type === 'crosspost' ? getPostHTML(post.content.crosspost) : ''}
 </div>
 ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
+    }
+
+    commentList.innerHTML = ''
+    content.innerHTML = getPostHTML(post)
 
     content.querySelectorAll('img,video').forEach((mediaElement) => {
       let loadEvent = 'onload',
@@ -128,25 +138,28 @@ ${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
       mediaElement[loadEvent] = () => {
         const isWide = mediaElement[width] > mediaElement[height]
         mediaElement.parentElement.style[isWide ? 'width' : 'height'] = isWide
-          ? '100%'
+          ? 'calc(100% - 1rem)'
           : '50vh'
         if (node === 'img')
           mediaElement.style[isWide ? 'width' : 'height'] = '100%'
         else if (node === 'video')
           mediaElement[isWide ? 'width' : 'height'] =
-            mediaElement.parentElement[isWide ? 'clientWidth' : 'clientHeight']
+            mediaElement.parentElement[
+              isWide ? 'clientWidth' : 'clientHeight'
+            ] - parseFloat(getComputedStyle(document.body).fontSize)
       }
     })
-    // TODO: Add post score
 
-    const setCommentList = (comments) => {
-      // TODO: Add sort option, comment count, refresh button at top
+    const setCommentList = (comments) =>
       commentList.append(
         ...comments.flatMap((comment) => comment.getHTMLElements())
       )
-    }
     const handleError = (err) => {
       console.error(err)
+      const errorLi = document.createElement('li')
+      errorLi.className = 'error'
+      errorLi.innerText = `An error occurred while loading comments.${err?.message ? `\n${err.message}` : ''}`
+      commentList.appendChild(errorLi)
     }
 
     if (!loadedComments[post.id]) {

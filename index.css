@@ -170,20 +170,58 @@ dialog.post .content {
   text-align: left;
 }
 
-dialog.post .content img,
-dialog.post .content video {
+dialog.post img,
+dialog.post video {
   display: block;
   margin: auto;
 }
 
-dialog.post .content div:has(img, video) {
-  background-color: rgba(0, 0, 0, 0.2);
+dialog.post img {
   margin-bottom: 1rem;
+}
+
+dialog.post img:last-child {
+  margin-bottom: 0;
+}
+
+dialog.post .content div:has(img, video) {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+
+dialog.post .content div:has(img, video):last-of-type {
+  margin-bottom: 0;
 }
 
 dialog.post .comments {
   padding-top: 1rem;
   text-align: left;
+}
+
+dialog.post .content h1 {
+  margin: 0;
+}
+
+dialog.post a.reddit {
+  display: inline-block;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  color: white;
+  background-color: orangered;
+  transition: all 0.3s;
+}
+
+dialog.post a.reddit:hover {
+  filter: brightness(0.7);
+  text-decoration: none;
+}
+
+dialog.post .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0;
 }
 
 .subreddit {
@@ -328,7 +366,7 @@ dialog.post .comment {
   margin-bottom: 0.2rem;
 }
 
-.subreddit .post .type {
+.post-type {
   display: inline-block;
   font-size: 0.8rem;
   padding: 0.2rem 0.4rem;
