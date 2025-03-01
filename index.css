@@ -189,12 +189,7 @@ dialog.post .content div:has(img, video) {
   padding: 0.5rem;
 }
 
-dialog.post .content div:has(img, video):last-of-type {
-  margin-bottom: 0;
-}
-
 dialog.post .comments {
-  padding-top: 1rem;
   text-align: left;
 }
 
@@ -216,12 +211,17 @@ dialog.post a.reddit:hover {
   text-decoration: none;
 }
 
-dialog.post .info {
+dialog.post .content .info {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
   padding: 0.3rem 0;
+}
+
+dialog.post .content .info:last-child {
+  border-top: 2px solid lightgray;
+  margin: 0.5rem 0;
 }
 
 .subreddit {

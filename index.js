@@ -1,4 +1,10 @@
-import { Subreddit, Comment, baseURL, formatDate } from './subreddit.js'
+import {
+  Subreddit,
+  Comment,
+  baseURL,
+  formatDate,
+  formatNumber
+} from './subreddit.js'
 
 const loadedComments = {}
 
@@ -117,7 +123,11 @@ function subredditEvents(subreddit) {
   }
   ${post.type === 'crosspost' ? getPostHTML(post.content.crosspost) : ''}
 </div>
-${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}`
+${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}
+<div class="info">
+  <div class="score"><i class="fa-solid fa-angle-up"></i> ${formatNumber(post.score)}</div>
+  <div class="comment-count"><i class="fa-solid fa-comment"></i> ${post.commentCount} Comments</div>
+</div>`
     }
 
     commentList.innerHTML = ''
