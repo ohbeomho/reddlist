@@ -29,13 +29,18 @@ select {
   transition: all 0.3s;
 }
 
+ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
 button,
 .select {
   user-select: none;
   cursor: pointer;
   background-color: lightgray;
   padding: 0.4rem;
-  border-radius: 0.5rem;
 }
 
 button:hover,
@@ -86,13 +91,15 @@ div.menu button.remove:hover {
 }
 
 button.close {
-  position: absolute;
+  display: inline-flex;
   background-color: transparent;
-  width: 1.2rem;
-  height: 1.2rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 1.2rem;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
   border-radius: 50%;
-  top: 0;
-  right: 0;
 }
 
 button.load {
@@ -124,8 +131,18 @@ main>div {
 
 dialog {
   text-align: center;
+  position: relative;
+  padding-top: 0;
   border: 2px solid lightgray;
-  border-radius: 0.5rem;
+}
+
+dialog .top {
+  position: sticky;
+  top: 0;
+  padding: 4px 0;
+  z-index: 1000;
+  background-color: white;
+  text-align: right;
 }
 
 dialog::backdrop {
@@ -136,7 +153,6 @@ dialog.add input {
   text-align: left;
   margin: 0.2rem;
   padding: 0.4rem;
-  border-radius: 0.5rem;
   border: 2px solid lightgray;
 }
 
@@ -146,12 +162,70 @@ dialog.add input:focus {
 }
 
 dialog.post {
-  width: min(100vw);
+  width: min(100vw, 50rem);
+}
+
+dialog.post .content {
+  word-break: break-word;
+  text-align: left;
+}
+
+dialog.post img,
+dialog.post video {
+  display: block;
+  margin: auto;
+}
+
+dialog.post img {
+  margin-bottom: 1rem;
+}
+
+dialog.post img:last-child {
+  margin-bottom: 0;
+}
+
+dialog.post .content div:has(img, video) {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+
+dialog.post .comments {
+  text-align: left;
+}
+
+dialog.post .content h1 {
+  margin: 0;
+}
+
+dialog.post a.reddit {
+  display: inline-block;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  color: white;
+  background-color: orangered;
+  transition: all 0.3s;
+}
+
+dialog.post a.reddit:hover {
+  filter: brightness(0.7);
+  text-decoration: none;
+}
+
+dialog.post .content .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0;
+}
+
+dialog.post .content .info:last-child {
+  border-top: 2px solid lightgray;
+  margin: 0.5rem 0;
 }
 
 .subreddit {
   overflow: auto;
-  border-radius: 0.5rem;
   border: 2px solid lightgray;
   transition: all 0.3s;
   position: relative;
@@ -201,7 +275,6 @@ dialog.post {
   justify-content: center;
   align-items: stretch;
   padding: 0.4rem 0;
-  border-radius: 0.4rem;
   background-color: white;
   top: 2.1rem;
   right: 0;
@@ -214,7 +287,6 @@ dialog.post {
 }
 
 .subreddit:has(.error) {
-  color: red;
   border-color: red;
   align-content: center;
   text-align: center;
@@ -253,50 +325,72 @@ dialog.post {
 
 .subreddit .posts {
   padding: 0.5rem 0;
-  margin: 0;
-  list-style: none;
 }
 
-.subreddit .post {
+.subreddit .post,
+dialog.post .comment {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 2rem;
   padding: 0.5rem;
-  border-bottom: 2px solid lightgray;
+}
+
+dialog.post .comment {
+  background-color: white;
+  border: 2px solid lightgray;
+  border-right-color: transparent;
+  margin-top: -2px;
+}
+
+.subreddit .post {
   transition: all 0.3s;
   user-select: none;
   cursor: pointer;
+  border-bottom: 2px solid lightgray;
 }
 
 .subreddit .post:hover {
   background-color: rgba(0, 0, 0, 0.1);
 }
 
-.subreddit .post .author {
+.author {
   font-size: 0.9rem;
 }
 
 .subreddit .post .title {
   display: block;
   font-size: 1.1rem;
-  line-break: anywhere;
+  word-break: break-word;
   margin-top: 0.5rem;
   margin-bottom: 0.2rem;
 }
 
-.subreddit .post .comments-time {
+.post-type {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  background-color: rgb(180, 180, 180);
+  border-radius: 0.6rem;
+}
+
+.comments-time,
+.time {
   font-size: 0.8rem;
   color: gray;
 }
 
-.subreddit .post .score {
+.score {
   text-align: center;
   color: orangered;
   min-width: 3rem;
 }
 
 .error {
+  color: red;
+}
+
+.subreddit .error {
   font-size: 1.4rem;
 }
 
@@ -304,7 +398,7 @@ dialog.post {
   color: black;
 }
 
-.error-message {
+.subreddit .error-message {
   text-align: left;
   padding: 2rem 0;
 }
@@ -318,6 +412,7 @@ dialog.post {
   position: relative;
   display: inline-flex;
   align-items: center;
+  transition: all 0.3s;
 }
 
 .select i {

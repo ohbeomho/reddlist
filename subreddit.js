@@ -1,9 +1,11 @@
-const baseURL = 'https://api.reddit.com'
+export const baseURL = 'https://api.reddit.com'
 
 // 1000 -> 1K
 // 1000000 -> 1M
 // 1000000000 -> 1B
-function formatNumber(num) {
+export function formatNumber(num) {
+  if (typeof num !== 'number') return 'NaN'
+
   let n = 0
   const chars = ['', 'K', 'M', 'B']
 
@@ -19,7 +21,9 @@ function formatNumber(num) {
 }
 
 // Relative time format
-function formatDate(timestampSec) {
+export function formatDate(timestampSec) {
+  if (typeof timestampSec !== 'number') return 'NaN'
+
   const now = Math.floor(Date.now() / 1000)
   let diff = now - timestampSec,
     n = 0
@@ -33,7 +37,7 @@ function formatDate(timestampSec) {
     n++
   }
 
-  return [diff, units[n] + (diff > 1 ? 's' : '')]
+  return `${diff} ${units[n] + (diff > 1 ? 's' : '')} ago`
 }
 
 export class Subreddit {
@@ -51,7 +55,8 @@ export class Subreddit {
       'fetch-finish': [],
       remove: [],
       'sort-change': [],
-      'html-load': []
+      'html-load': [],
+      'post-open': []
     }
     this.args = {
       'fetch-start': [],
@@ -62,7 +67,8 @@ export class Subreddit {
       'fetch-finish': ['info'],
       remove: [],
       'sort-change': ['sort'],
-      'html-load': []
+      'html-load': [],
+      'post-open': ['post']
     }
   }
 
@@ -93,7 +99,6 @@ export class Subreddit {
     this.listeners[event].splice(this.listeners[event].indexOf(listener), 1)
   }
 
-  // Fetch posts from the subreddit
   async fetchPosts(after) {
     this.notify('fetch-post-start')
 
@@ -104,36 +109,80 @@ export class Subreddit {
     )
     const parsed = await response.json()
 
+    const parsePostData = (postData) => {
+      const {
+        title,
+        id,
+        selftext_html: text,
+        author,
+        num_comments: commentCount,
+        score,
+        thumbnail,
+        created: timestampSec,
+        post_hint,
+        is_gallery,
+        is_video,
+        poll_data,
+        crosspost_parent,
+        crosspost_parent_list,
+        is_self,
+        media,
+        media_metadata,
+        permalink,
+        name,
+        url_overridden_by_dest
+      } = postData
+
+      let type = 'link'
+      if (post_hint === 'image') type = 'image'
+      else if (is_gallery) type = 'gallery'
+      else if (is_video) type = 'video'
+      else if (poll_data) type = 'poll'
+      else if (crosspost_parent) type = 'crosspost'
+      else if (is_self) type = 'text'
+
+      return new Post(
+        this,
+        title,
+        id,
+        name,
+        type,
+        {
+          text,
+          image: type === 'image' ? url_overridden_by_dest : null,
+          video:
+            type === 'video'
+              ? Object.entries(media.reddit_video)
+                  .filter(([key, _]) =>
+                    ['hls_url', 'dash_url', 'fallback_url'].includes(key)
+                  )
+                  .map(([_, value]) => value)
+              : null,
+          link: url_overridden_by_dest,
+          gallery: media_metadata
+            ? Object.values(media_metadata).map(({ s }) => s?.u)
+            : null,
+          crosspost:
+            type === 'crosspost'
+              ? parsePostData(crosspost_parent_list[0])
+              : null
+        },
+        author,
+        commentCount,
+        score,
+        thumbnail,
+        `https://www.reddit.com${permalink}`,
+        timestampSec
+      )
+    }
+
     this.posts.push(
-      ...parsed.data.children.map((post) => {
-        const {
-          title,
-          id,
-          name,
-          selftext: content,
-          author,
-          num_comments: commentCount,
-          score,
-          created: timestampSec
-        } = post.data
-        return new Post(
-          this.info.name,
-          title,
-          id,
-          name,
-          content,
-          author,
-          commentCount,
-          score,
-          timestampSec
-        )
-      })
+      ...parsed.data.children.map((post) => parsePostData(post.data))
     )
 
     this.notify('fetch-post-finish')
   }
 
-  // Fetch additional information of the subreddit.
   async fetchInfo() {
     this.notify('fetch-info-start')
 
@@ -326,36 +375,40 @@ export class Post {
     title,
     id,
     name,
+    type,
     content,
     author,
     commentCount,
     score,
+    thumbnail,
+    url,
     timestampSec
   ) {
     this.subreddit = subreddit
     this.title = title
     this.id = id
     this.name = name
+    this.type = type
     this.content = content
     this.author = author
     this.commentCount = commentCount
     this.score = score
+    this.thumbnail = thumbnail
+    this.url = url
     this.timestampSec = timestampSec
   }
 
   getHTMLElement() {
-    // Post link: https://www.reddit.com/r/${this.subreddit}/comments/${this.id}
-    // User link: https://www.reddit.com/u/${this.author}
     const post = document.createElement('li')
     post.className = 'post'
-    // TODO: Open post dialog
-    post.onclick = () => {}
+    post.onclick = () => this.subreddit.notify('post-open', { post: this })
 
     post.innerHTML = `
 <div class="info">
   <div class="author">u/${this.author}</div>
   <div class="title">${this.title}</div>
-  <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec).join(' ')} ago</div>
+  ${this.type !== 'text' ? `<div class="post-type">${this.type}</div>` : ''}
+  <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec)}</div>
 </div>
 <div class="score">
   <i class="fa-solid fa-angle-up"></i>
@@ -363,5 +416,51 @@ export class Post {
 </div>`
 
     return post
+  }
+}
+
+export class Comment {
+  constructor(post, id, content, author, score, replies, timestampSec) {
+    this.post = post
+    this.id = id
+    this.content = content
+    this.author = author
+    this.score = score
+    this.replies = replies
+    this.timestampSec = timestampSec
+  }
+
+  getHTMLElements(depth = 0, parentComment) {
+    const comment = document.createElement('li')
+    comment.className = 'comment'
+    comment.style.marginLeft = `${depth}rem`
+
+    if (this.id === '_') {
+      comment.innerHTML = `<a href="${parentComment ? `https://www.reddit.com/r/${this.post.subreddit.info.name}/comments/${this.post.id}/comment/${parentComment.id}` : this.post.url}" target="_blank">View more comments on reddit</a>`
+      return [comment]
+    }
+
+    comment.innerHTML = `
+<div>
+  <div class="info">
+    <div class="author"><a href="https://www.reddit.com/user/${this.author}">u/${this.author}</a></div>
+    <div class="time">${formatDate(this.timestampSec)}</div>
+  </div>
+  <div class="content">${this.content}</div>
+</div>
+<div class="score">
+  <i class="fa-solid fa-angle-up"></i>
+  <div>${formatNumber(this.score)}</div>
+</div>`
+
+    const elements = [comment]
+    if (this.replies.length)
+      elements.push(
+        ...this.replies.flatMap((comment) =>
+          comment.getHTMLElements(depth + 1, this)
+        )
+      )
+
+    return elements
   }
 }

@@ -1,4 +1,66 @@
-import { Subreddit } from './subreddit.js'
+import {
+  Subreddit,
+  Comment,
+  baseURL,
+  formatDate,
+  formatNumber
+} from './subreddit.js'
+
+const loadedComments = {}
+
+function unescapeHTML(html) {
+  // replacing &amp; twice because links in selftext
+  // already has &amp; so in selftext_html it becomes &amp;amp;
+  return html
+    .replaceAll('&amp;', '&')
+    .replaceAll('&amp;', '&')
+    .replaceAll('&lt;', '<')
+    .replaceAll('&gt;', '>')
+    .replaceAll('&quot;', '"')
+    .replace(/&#0?39;/g, "'")
+}
+
+async function loadComments(post) {
+  if (!loadedComments[post.id]) {
+    const res = await fetch(`${baseURL}/comments/${post.id}?depth=3&limit=30`)
+    const data = await res.json()
+    const comments = data[1]
+
+    const parseComments = (comments) => {
+      return comments
+        ? comments.data.children
+            .map((comment) => {
+              const {
+                id,
+                body: content,
+                author,
+                score,
+                replies,
+                created: timestampSec,
+                children
+              } = comment.data
+              return new Comment(
+                post,
+                children ? '_' : id,
+                content,
+                author,
+                score,
+                parseComments(replies),
+                timestampSec
+              )
+            })
+            .filter((comment) => comment !== null)
+        : []
+    }
+
+    loadedComments[post.id] = parseComments(comments)
+
+    // Delete data from loadedComments after 5 min
+    setTimeout(() => delete loadedComments[post.id], 1000 * 60 * 5)
+  }
+
+  return loadedComments[post.id]
+}
 
 function equalsIgnoreCase(str1, str2) {
   if (typeof str1 !== 'string' || typeof str2 !== 'string')
@@ -34,6 +96,95 @@ function subredditEvents(subreddit) {
       (data) => !equalsIgnoreCase(data.name, subreddit.info.name)
     )
     save()
+  })
+  subreddit.on('post-open', (post) => {
+    const content = postDialog.querySelector('.content')
+    const commentList = postDialog.querySelector('.comments')
+
+    const getPostHTML = (post) => {
+      return `
+<a class="reddit" href="${post.url}" target="_blank"><i class="fa-brands fa-reddit-alien"></i> View on reddit</a>
+<h1>${post.title}</h1>
+<div class="info">
+  <div class="author"><a href="https://www.reddit.com/user/${post.author}" target="_blank">u/${post.author}</a></div>
+  <div class="time">${formatDate(post.timestampSec)}</div>
+  <div class="post-type">${post.type}</div>
+</div>
+<div style="font-size: ${post.type === 'crosspost' ? 0.8 : 1}rem">
+  ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
+  ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<img src="${imageUrl}" alt="post image" />`).join('')}` : ''}
+  ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
+  ${
+    post.type === 'video'
+      ? `<video controls>${post.content.video
+          .map((videoUrl) => `<source src="${unescapeHTML(videoUrl)}" />`)
+          .join('')}</video>`
+      : ''
+  }
+  ${post.type === 'crosspost' ? getPostHTML(post.content.crosspost) : ''}
+</div>
+${post.content.text ? `<div>${unescapeHTML(post.content.text)}</div>` : ''}
+<div class="info">
+  <div class="score"><i class="fa-solid fa-angle-up"></i> ${formatNumber(post.score)}</div>
+  <div class="comment-count"><i class="fa-solid fa-comment"></i> ${post.commentCount} Comments</div>
+</div>`
+    }
+
+    commentList.innerHTML = ''
+    content.innerHTML = getPostHTML(post)
+
+    content.querySelectorAll('img,video').forEach((mediaElement) => {
+      let loadEvent = 'onload',
+        width = 'width',
+        height = 'height'
+      const node = mediaElement.nodeName.toLowerCase()
+
+      if (node === 'video') {
+        loadEvent = 'oncanplay'
+        width = 'videoWidth'
+        height = 'videoHeight'
+      }
+
+      mediaElement[loadEvent] = () => {
+        const isWide = mediaElement[width] > mediaElement[height]
+        mediaElement.parentElement.style[isWide ? 'width' : 'height'] = isWide
+          ? 'calc(100% - 1rem)'
+          : '50vh'
+        if (node === 'img')
+          mediaElement.style[isWide ? 'width' : 'height'] = '100%'
+        else if (node === 'video')
+          mediaElement[isWide ? 'width' : 'height'] =
+            mediaElement.parentElement[
+              isWide ? 'clientWidth' : 'clientHeight'
+            ] - parseFloat(getComputedStyle(document.body).fontSize)
+      }
+    })
+
+    const setCommentList = (comments) =>
+      commentList.append(
+        ...comments.flatMap((comment) => comment.getHTMLElements())
+      )
+    const handleError = (err) => {
+      console.error(err)
+      const errorLi = document.createElement('li')
+      errorLi.className = 'error'
+      errorLi.innerText = `An error occurred while loading comments.${err?.message ? `\n${err.message}` : ''}`
+      commentList.appendChild(errorLi)
+    }
+
+    if (!loadedComments[post.id]) {
+      const loadButton = document.createElement('button')
+      loadButton.innerText = 'Load comments'
+      loadButton.onclick = () => {
+        li.remove()
+        loadComments(post).then(setCommentList).catch(handleError)
+      }
+      const li = document.createElement('li')
+      li.appendChild(loadButton)
+      commentList.appendChild(li)
+    } else loadComments(post).then(setCommentList)
+
+    postDialog.showModal()
   })
 }
 
@@ -115,16 +266,12 @@ function changeCurrentIcon() {
   icons.style.left = `calc(50% - ${newCurrent.offsetLeft}px - 1rem)`
 }
 
-// Close the dialog when the outside of the dialog is clicked.
-document.querySelectorAll('dialog').forEach((dialog) => {
-  dialog.onclick = (e) =>
-    (e.offsetX < 0 ||
-      e.offsetY < 0 ||
-      e.offsetX > dialog.clientWidth ||
-      e.offsetY > dialog.clientHeight) &&
-    dialog.close()
-  dialog.querySelector('button.close').onclick = () => dialog.close()
-})
+document
+  .querySelectorAll('dialog')
+  .forEach(
+    (dialog) =>
+      (dialog.querySelector('button.close').onclick = () => dialog.close())
+  )
 
 function addSubreddit() {
   const input = addDialog.querySelector('input')
