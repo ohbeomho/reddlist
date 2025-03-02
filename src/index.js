@@ -161,6 +161,7 @@ function addIcon(subreddit) {
   })
   newIcon.on('remove', () => icons.splice(idx, 1))
   icons.push(newIcon)
+  addIconElement.before(newIcon.htmlElement)
 }
 
 document
