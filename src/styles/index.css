@@ -118,13 +118,13 @@ main {
   gap: 1rem;
 }
 
-main > div:not(.subreddit) {
+main>div:not(.subreddit) {
   text-align: center;
   align-content: center;
   border: 2px solid transparent;
 }
 
-main > div {
+main>div {
   flex: 0 0 20rem;
   box-sizing: border-box;
 }
@@ -176,12 +176,8 @@ dialog.post video {
   margin: auto;
 }
 
-dialog.post img {
+dialog.post img:not(:last-child) {
   margin-bottom: 1rem;
-}
-
-dialog.post img:last-child {
-  margin-bottom: 0;
 }
 
 dialog.post .content div:has(img, video) {
@@ -292,7 +288,7 @@ dialog.post .content .info:last-child {
   text-align: center;
 }
 
-.subreddit > .info {
+.subreddit>.info {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -305,7 +301,7 @@ dialog.post .content .info:last-child {
   background-color: white;
 }
 
-.subreddit > .info .icon {
+.subreddit>.info .icon {
   width: 2.5rem;
   height: 2.5rem;
   border: 2px solid lightgray;
@@ -337,9 +333,10 @@ dialog.post .comment {
 }
 
 dialog.post .comment {
+  border-width: 2px 0;
+  border-style: solid;
+  border-color: lightgray;
   background-color: white;
-  border: 2px solid lightgray;
-  border-right-color: transparent;
   margin-top: -2px;
 }
 
@@ -475,7 +472,7 @@ dialog.post .comment {
     transition: all 0.3s;
   }
 
-  .icons > * {
+  .icons>* {
     background-color: white;
     width: 2.5rem;
     height: 2.5rem;
@@ -483,14 +480,15 @@ dialog.post .comment {
     border-radius: 50%;
     text-align: center;
     align-content: center;
+    user-select: none;
   }
 
-  .icons > *.current {
+  .icons>*.current {
     scale: 1.1;
     border-color: gray;
   }
 
-  main > div {
+  main>div {
     flex: 0 0 calc(100vw - 2rem);
     max-height: calc(100vh - 6rem);
   }

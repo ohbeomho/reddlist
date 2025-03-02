@@ -30,6 +30,8 @@ export class Comment {
     const comment = document.createElement('li')
     comment.className = 'comment'
     comment.style.marginLeft = `${depth}rem`
+    if (depth > 0)
+      comment.style.borderLeft = `2px solid hsl(${depth * 25}deg 90% 50%)`
 
     if (this.kind === 'more') {
       comment.innerHTML = `<a href="${parentComment ? `https://www.reddit.com/r/${this.post.subreddit.info.name}/comments/${this.post.id}/comment/${parentComment.id}` : this.post.url}" target="_blank">View more comments on reddit</a>`
