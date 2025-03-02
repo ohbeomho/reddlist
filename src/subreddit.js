@@ -1,113 +1,47 @@
-export const baseURL = 'https://api.reddit.com'
+import { getJson } from './utils/request'
+import { Listener } from './listener'
+import { Post } from './post'
 
-// 1000 -> 1K
-// 1000000 -> 1M
-// 1000000000 -> 1B
-export function formatNumber(num) {
-  if (typeof num !== 'number') return 'NaN'
+export const REDDIT_API = 'https://api.reddit.com'
 
-  let n = 0
-  const chars = ['', 'K', 'M', 'B']
-
-  while (true) {
-    const newValue = Math.round(num / 100) / 10
-    if (newValue < 1) break
-
-    num = newValue
-    n++
-  }
-
-  return num + chars[n]
-}
-
-// Relative time format
-export function formatDate(timestampSec) {
-  if (typeof timestampSec !== 'number') return 'NaN'
-
-  const now = Math.floor(Date.now() / 1000)
-  let diff = now - timestampSec,
-    n = 0
-  const units = ['second', 'minute', 'hour', 'day', 'week', 'month', 'year']
-  const div = [60, 60, 24, 7, 30, 12]
-
-  while (true) {
-    if (Math.floor(diff / div[n]) < 1) break
-
-    diff = Math.floor(diff / div[n])
-    n++
-  }
-
-  return `${diff} ${units[n] + (diff > 1 ? 's' : '')} ago`
-}
-
-export class Subreddit {
+export class Subreddit extends Listener {
+  /**
+   * @param {string} name
+   * @param {string} icon
+   * @param {string} banner
+   * @param {string} sort
+   */
   constructor(name, icon, banner, sort) {
+    super([
+      { name: 'fetch-start' },
+      { name: 'fetch-finish' },
+      { name: 'fetch-post-start' },
+      { name: 'fetch-post-finish' },
+      { name: 'remove' },
+      { name: 'sort-change', args: ['sort'] },
+      { name: 'post-open', args: ['post'] },
+      { name: 'html-load' }
+    ])
+    /** @type {Object.<string, any>} */
     this.info = { name, icon, banner }
     this.sort = sort
+    /** @type {Post[]} */
     this.posts = []
+    /** @type {HTMLDivElement} */
     this.htmlElement = null
-    this.listeners = {
-      'fetch-start': [],
-      'fetch-info-start': [],
-      'fetch-info-finish': [],
-      'fetch-post-start': [],
-      'fetch-post-finish': [],
-      'fetch-finish': [],
-      remove: [],
-      'sort-change': [],
-      'html-load': [],
-      'post-open': []
-    }
-    this.args = {
-      'fetch-start': [],
-      'fetch-info-start': [],
-      'fetch-info-finish': [],
-      'fetch-post-start': [],
-      'fetch-post-finish': [],
-      'fetch-finish': ['info'],
-      remove: [],
-      'sort-change': ['sort'],
-      'html-load': [],
-      'post-open': ['post']
-    }
   }
 
-  getData() {
-    return { name: this.info.name, sort: this.sort }
-  }
-
-  notify(event, args) {
-    this.listeners[event]?.forEach((listener) => {
-      listener(...this.args[event].map((argName) => args[argName]))
-
-      if (listener.once) this.removeListener(listener)
-    })
-  }
-
-  on(event, listener) {
-    this.listeners[event]?.push(listener)
-  }
-
-  once(event, listener) {
-    listener.once = true
-    this.listeners[event]?.push(listener)
-  }
-
-  removeListener(event, listener) {
-    if (!this.listeners[event] || !this.listeners.includes(listener)) return
-
-    this.listeners[event].splice(this.listeners[event].indexOf(listener), 1)
-  }
-
+  /**
+   * @param {string} after
+   */
   async fetchPosts(after) {
     this.notify('fetch-post-start')
 
     if (!after) this.posts = []
 
-    const response = await fetch(
-      `${baseURL}/r/${this.info.name}/${this.sort}${after ? `?after=${after}` : ''}`
+    const jsonData = await getJson(
+      `${REDDIT_API}/r/${this.info.name}/${this.sort}${after ? `?after=${after}` : ''}`
     )
-    const parsed = await response.json()
 
     const parsePostData = (postData) => {
       const {
@@ -177,17 +111,14 @@ export class Subreddit {
     }
 
     this.posts.push(
-      ...parsed.data.children.map((post) => parsePostData(post.data))
+      ...jsonData.data.children.map((post) => parsePostData(post.data))
     )
 
     this.notify('fetch-post-finish')
   }
 
   async fetchInfo() {
-    this.notify('fetch-info-start')
-
-    const response = await fetch(`${baseURL}/r/${this.info.name}/about`)
-    const parsed = await response.json()
+    const parsed = await getJson(`${REDDIT_API}/r/${this.info.name}/about`)
     const {
       display_name: name,
       public_description: desc,
@@ -201,8 +132,6 @@ export class Subreddit {
       banner,
       icon: icon || parsed.data.icon_img
     })
-
-    this.notify('fetch-info-finish')
   }
 
   async fetchData() {
@@ -223,7 +152,7 @@ export class Subreddit {
     this.notify('remove')
   }
 
-  getHTMLElement() {
+  getHtmlElement() {
     this.htmlElement = document.createElement('div')
     this.htmlElement.classList.add('subreddit')
 
@@ -235,7 +164,7 @@ export class Subreddit {
     if (this.err) {
       this.htmlElement.innerHTML = `
 <div class="error">
-  Error loading:
+  Failed to load
   <br />
   <b>r/${this.info.name}</b>
 </div>
@@ -316,7 +245,7 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.querySelector('.info').appendChild(menuButton)
       this.htmlElement
         .querySelector('.posts')
-        .append(...this.posts.map((post) => post.getHTMLElement()))
+        .append(...this.posts.map((post) => post.getHtmlElement()))
 
       const loadPostButton = document.createElement('button')
       loadPostButton.innerText = 'Load more'
@@ -356,7 +285,7 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
         this.htmlElement.querySelector('.posts').innerHTML = ''
         this.htmlElement
           .querySelector('.posts')
-          .append(...this.posts.map((post) => post.getHTMLElement()))
+          .append(...this.posts.map((post) => post.getHtmlElement()))
 
         loadPostButton.disabled = false
         loadPostButton.innerHTML = 'Load more'
@@ -366,101 +295,5 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
     })
 
     return this.htmlElement
-  }
-}
-
-export class Post {
-  constructor(
-    subreddit,
-    title,
-    id,
-    name,
-    type,
-    content,
-    author,
-    commentCount,
-    score,
-    thumbnail,
-    url,
-    timestampSec
-  ) {
-    this.subreddit = subreddit
-    this.title = title
-    this.id = id
-    this.name = name
-    this.type = type
-    this.content = content
-    this.author = author
-    this.commentCount = commentCount
-    this.score = score
-    this.thumbnail = thumbnail
-    this.url = url
-    this.timestampSec = timestampSec
-  }
-
-  getHTMLElement() {
-    const post = document.createElement('li')
-    post.className = 'post'
-    post.onclick = () => this.subreddit.notify('post-open', { post: this })
-
-    post.innerHTML = `
-<div class="info">
-  <div class="author">u/${this.author}</div>
-  <div class="title">${this.title}</div>
-  ${this.type !== 'text' ? `<div class="post-type">${this.type}</div>` : ''}
-  <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec)}</div>
-</div>
-<div class="score">
-  <i class="fa-solid fa-angle-up"></i>
-  <div>${formatNumber(this.score)}</div>
-</div>`
-
-    return post
-  }
-}
-
-export class Comment {
-  constructor(post, id, content, author, score, replies, timestampSec) {
-    this.post = post
-    this.id = id
-    this.content = content
-    this.author = author
-    this.score = score
-    this.replies = replies
-    this.timestampSec = timestampSec
-  }
-
-  getHTMLElements(depth = 0, parentComment) {
-    const comment = document.createElement('li')
-    comment.className = 'comment'
-    comment.style.marginLeft = `${depth}rem`
-
-    if (this.id === '_') {
-      comment.innerHTML = `<a href="${parentComment ? `https://www.reddit.com/r/${this.post.subreddit.info.name}/comments/${this.post.id}/comment/${parentComment.id}` : this.post.url}" target="_blank">View more comments on reddit</a>`
-      return [comment]
-    }
-
-    comment.innerHTML = `
-<div>
-  <div class="info">
-    <div class="author"><a href="https://www.reddit.com/user/${this.author}">u/${this.author}</a></div>
-    <div class="time">${formatDate(this.timestampSec)}</div>
-  </div>
-  <div class="content">${this.content}</div>
-</div>
-<div class="score">
-  <i class="fa-solid fa-angle-up"></i>
-  <div>${formatNumber(this.score)}</div>
-</div>`
-
-    const elements = [comment]
-    if (this.replies.length)
-      elements.push(
-        ...this.replies.flatMap((comment) =>
-          comment.getHTMLElements(depth + 1, this)
-        )
-      )
-
-    return elements
   }
 }

@@ -1,0 +1,497 @@
+@font-face {
+  font-family: 'Lato';
+  src: url(../assets/Lato.ttf);
+}
+
+* {
+  font-family: 'Lato';
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button,
+input,
+select {
+  all: unset;
+  transition: all 0.3s;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+button,
+.select {
+  user-select: none;
+  cursor: pointer;
+  background-color: lightgray;
+  padding: 0.4rem;
+}
+
+button:hover,
+.select:hover {
+  filter: brightness(0.7);
+}
+
+button:disabled {
+  color: gray;
+}
+
+button.add,
+button.menu {
+  padding: 0;
+  text-align: center;
+  align-content: center;
+  border-radius: 50%;
+}
+
+button.add {
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.4rem;
+}
+
+button.menu {
+  width: 2rem;
+  height: 2rem;
+  z-index: 1000;
+  background-color: transparent;
+  position: relative;
+}
+
+button.menu:hover,
+button.close:hover,
+button.menu:has(div.menu.open) {
+  filter: none;
+  background-color: rgb(0, 0, 0, 0.2);
+}
+
+div.menu button.remove {
+  background-color: transparent;
+  border-radius: 0;
+}
+
+div.menu button.remove:hover {
+  backdrop-filter: brightness(0.9);
+}
+
+button.close {
+  display: inline-flex;
+  background-color: transparent;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 1.2rem;
+  text-align: center;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+}
+
+button.load {
+  display: block;
+  margin: 1rem auto;
+}
+
+main {
+  scroll-behavior: smooth;
+  flex: 1;
+  display: flex;
+  padding: 1rem;
+  max-height: calc(100vh - 2rem);
+  align-items: stretch;
+  overflow-x: auto;
+  gap: 1rem;
+}
+
+main > div:not(.subreddit) {
+  text-align: center;
+  align-content: center;
+  border: 2px solid transparent;
+}
+
+main > div {
+  flex: 0 0 20rem;
+  box-sizing: border-box;
+}
+
+dialog {
+  text-align: center;
+  position: relative;
+  padding-top: 0;
+  border: 2px solid lightgray;
+}
+
+dialog .top {
+  position: sticky;
+  top: 0;
+  padding: 4px 0;
+  z-index: 1000;
+  background-color: white;
+  text-align: right;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+dialog.add input {
+  text-align: left;
+  margin: 0.2rem;
+  padding: 0.4rem;
+  border: 2px solid lightgray;
+}
+
+dialog.add input:hover,
+dialog.add input:focus {
+  border-color: dimgray;
+}
+
+dialog.post {
+  width: min(100vw, 50rem);
+}
+
+dialog.post .content {
+  word-break: break-word;
+  text-align: left;
+}
+
+dialog.post img,
+dialog.post video {
+  display: block;
+  margin: auto;
+}
+
+dialog.post img {
+  margin-bottom: 1rem;
+}
+
+dialog.post img:last-child {
+  margin-bottom: 0;
+}
+
+dialog.post .content div:has(img, video) {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+
+dialog.post .comments {
+  text-align: left;
+}
+
+dialog.post .content h1 {
+  margin: 0;
+}
+
+dialog.post a.reddit {
+  display: inline-block;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  color: white;
+  background-color: orangered;
+  transition: all 0.3s;
+}
+
+dialog.post a.reddit:hover {
+  filter: brightness(0.7);
+  text-decoration: none;
+}
+
+dialog.post .content .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0;
+}
+
+dialog.post .content .info:last-child {
+  border-top: 2px solid lightgray;
+  margin: 0.5rem 0;
+}
+
+.subreddit {
+  overflow: auto;
+  border: 2px solid lightgray;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.subreddit:not(.loaded) {
+  backdrop-filter: brightness(0.9);
+}
+
+.subreddit:has(.fetch:hover) {
+  backdrop-filter: brightness(0.8);
+}
+
+.subreddit .loading,
+.subreddit .fetch {
+  position: absolute;
+  font-size: 2rem;
+  background-color: transparent;
+  color: gray;
+  text-align: center;
+  align-content: center;
+}
+
+.subreddit .fetch {
+  top: 0;
+  left: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.subreddit .loading {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+}
+
+.subreddit div.menu {
+  opacity: 0;
+  position: absolute;
+  border: 2px solid lightgray;
+  cursor: default;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0.4rem 0;
+  background-color: white;
+  top: 2.1rem;
+  right: 0;
+  z-index: 1000;
+}
+
+.subreddit div.menu.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.subreddit:has(.error) {
+  border-color: red;
+  align-content: center;
+  text-align: center;
+}
+
+.subreddit > .info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid lightgray;
+  transition: all 0.3s;
+  padding: 0.4rem 1rem;
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background-color: white;
+}
+
+.subreddit > .info .icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid lightgray;
+  border-radius: 50%;
+  text-align: center;
+  align-content: center;
+}
+
+.subreddit .banner {
+  position: relative;
+  z-index: 1;
+  height: 4rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.subreddit .posts {
+  padding: 0.5rem 0;
+}
+
+.subreddit .post,
+dialog.post .comment {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.5rem;
+}
+
+dialog.post .comment {
+  background-color: white;
+  border: 2px solid lightgray;
+  border-right-color: transparent;
+  margin-top: -2px;
+}
+
+.subreddit .post {
+  transition: all 0.3s;
+  user-select: none;
+  cursor: pointer;
+  border-bottom: 2px solid lightgray;
+}
+
+.subreddit .post:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.author {
+  font-size: 0.9rem;
+}
+
+.subreddit .post .title {
+  display: block;
+  font-size: 1.1rem;
+  word-break: break-word;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.post-type {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  background-color: rgb(180, 180, 180);
+  border-radius: 0.6rem;
+}
+
+.comments-time,
+.time {
+  font-size: 0.8rem;
+  color: gray;
+}
+
+.score {
+  text-align: center;
+  color: orangered;
+  min-width: 3rem;
+}
+
+.error {
+  color: red;
+}
+
+.subreddit .error {
+  font-size: 1.4rem;
+}
+
+.subreddit:has(.error) button {
+  color: black;
+}
+
+.subreddit .error-message {
+  text-align: left;
+  padding: 2rem 0;
+}
+
+.message {
+  margin-top: 1rem;
+}
+
+.select {
+  padding: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s;
+}
+
+.select i {
+  position: absolute;
+  right: 0.7rem;
+  pointer-events: none;
+}
+
+.select select {
+  padding: 0.4rem;
+  padding-right: 1.5rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.actions {
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+.icons {
+  display: none;
+}
+
+@keyframes spin {
+  0% {
+    rotate: 0deg;
+  }
+
+  100% {
+    rotate: 360deg;
+  }
+}
+
+@media screen and (max-width: 500px) {
+  main {
+    overflow: hidden;
+    padding-bottom: 4rem;
+  }
+
+  .icons {
+    display: flex;
+    position: fixed;
+    margin: 0 auto;
+    bottom: 1rem;
+    width: max-content;
+    left: calc(50% - 1rem);
+    overflow: hideen;
+    justify-content: center;
+    gap: 0.3rem;
+    align-items: center;
+    transition: all 0.3s;
+  }
+
+  .icons > * {
+    background-color: white;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 2px solid lightgray;
+    border-radius: 50%;
+    text-align: center;
+    align-content: center;
+  }
+
+  .icons > *.current {
+    scale: 1.1;
+    border-color: gray;
+  }
+
+  main > div {
+    flex: 0 0 calc(100vw - 2rem);
+    max-height: calc(100vh - 6rem);
+  }
+}
