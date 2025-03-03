@@ -20,7 +20,7 @@ export class Listener {
 
   /**
    * @param {string} event
-   * @param {any[]} args
+   * @param {any?} args
    */
   notify(event, args) {
     for (let arg of this.args[event]) {
@@ -32,7 +32,7 @@ export class Listener {
     this.listeners[event]?.forEach((listener) => {
       listener(...this.args[event].map((arg) => args[arg]))
 
-      if (listener.once) this.removeListener(listener)
+      if (listener.once) this.removeListener(event, listener)
     })
   }
 

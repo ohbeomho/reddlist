@@ -89,9 +89,7 @@ let localData = JSON.parse(localStorage.getItem('reddlist-subreddits') || '[]')
 /** @type {Subreddit[]} */
 const subreddits = localData.map((data) => {
   const { name, sort, icon, banner } = data
-  const subreddit = new Subreddit(name, icon, banner, sort)
-
-  return subreddit
+  return new Subreddit(name, icon, banner, sort)
 })
 
 function save() {
@@ -159,7 +157,7 @@ function addIcon(subreddit) {
     currIdx = icons.indexOf(newIcon)
     main.scroll(subreddits[currIdx].htmlElement.offsetLeft - fontSize, 0)
   })
-  newIcon.on('remove', () => icons.splice(idx, 1))
+  newIcon.on('remove', () => icons.splice(currIdx, 1))
   icons.push(newIcon)
   addIconElement.before(newIcon.htmlElement)
 }

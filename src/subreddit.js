@@ -7,8 +7,8 @@ export const REDDIT_API = 'https://api.reddit.com'
 export class Subreddit extends Listener {
   /**
    * @param {string} name
-   * @param {string} icon
-   * @param {string} banner
+   * @param {string | null} icon
+   * @param {string | null} banner
    * @param {string} sort
    */
   constructor(name, icon, banner, sort) {
@@ -32,7 +32,7 @@ export class Subreddit extends Listener {
   }
 
   /**
-   * @param {string} after
+   * @param {string?} after
    */
   async fetchPosts(after) {
     this.notify('fetch-post-start')

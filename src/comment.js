@@ -1,5 +1,5 @@
 import { Post } from './post'
-import { formatDate, formatNumber } from './utils/format'
+import { formatDate } from './utils/format'
 import { getScoreHtml } from './utils/score'
 
 export class Comment {
@@ -25,6 +25,7 @@ export class Comment {
   }
 
   /**
+   * @param {number} depth
    * @param {Comment?} parentComment
    */
   getHtmlElements(depth = 0, parentComment) {
