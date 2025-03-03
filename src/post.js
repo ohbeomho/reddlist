@@ -89,32 +89,32 @@ export class Post {
   getContentHtmlElement() {
     const content = document.createElement('div')
     content.className = 'content'
-    content.innerHTML = `
-<a class="reddit" href="${this.url}" target="_blank"><i class="fa-brands fa-reddit-alien"></i> View on reddit</a>
-<h1>${this.title}</h1>
+    const getPostHtml = /** @param {Post} post */ (post) =>
+      `<a class="reddit" href="${post.url}" target="_blank"><i class="fa-brands fa-reddit-alien"></i> View on reddit</a>
+<h1>${post.title}</h1>
 <div class="info">
-  <div class="author"><a href="https://www.reddit.com/user/${this.author}" target="_blank">u/${this.author}</a></div>
-  <div class="time">${formatDate(this.timestampSec)}</div>
-  <div class="post-type">${this.type}</div>
+  <div class="author"><a href="https://www.reddit.com/user/${post.author}" target="_blank">u/${post.author}</a></div>
+  <div class="time">${formatDate(post.timestampSec)}</div>
+  <div class="post-type">${post.type}</div>
 </div>
-<div style="font-size: ${this.type === 'crosspost' ? 0.8 : 1}rem">
-  ${this.type === 'image' ? `<img src="${this.content.image}" alt="this image" />` : ''}
-  ${this.type === 'gallery' ? `${this.content.gallery.map((imageUrl) => `<img src="${imageUrl}" alt="this image" />`).join('')}` : ''}
-  ${this.type === 'link' ? `<a href="${this.content.link}" target="_blank">${this.content.link}</a>` : ''}
-  ${
-    this.type === 'video'
-      ? `<video controls>${this.content.video
+<div style="font-size: ${post.type === 'crosspost' ? 0.8 : 1}rem">
+  ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
+  ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<img src="${imageUrl}" alt="post image" />`).join('')}` : ''}
+  ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
+  ${post.type === 'video'
+        ? `<video controls>${post.content.video
           .map((videoUrl) => `<source src="${unescapeHtml(videoUrl)}" />`)
           .join('')}</video>`
-      : ''
-  }
-  ${this.type === 'crosspost' ? getPostHtml(this.content.crosspost) : ''}
+        : ''
+      }
+  ${post.type === 'crosspost' ? getPostHtml(post.content.crosspost) : ''}
 </div>
-${this.content.text ? `<div>${unescapeHtml(this.content.text)}</div>` : ''}
+${post.content.text ? `<div>${unescapeHtml(post.content.text)}</div>` : ''}
 <div class="info">
-  <div class="score"><i class="fa-solid fa-angle-up"></i> ${formatNumber(this.score)}</div>
-  <div class="comment-count"><i class="fa-solid fa-comment"></i> ${this.commentCount} Comments</div>
+  ${getScoreHtml(post.score)}
+  <div class="comment-count"><i class="fa-solid fa-comment"></i> ${post.commentCount} Comments</div>
 </div>`
+    content.innerHTML = getPostHtml(this)
 
     // 이미지, 비디오 크기 조정
     content.querySelectorAll('img,video').forEach((mediaElement) => {
