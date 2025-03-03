@@ -1,0 +1,211 @@
+.subreddit {
+  overflow: auto;
+  border: 2px solid lightgray;
+  transition: all 0.3s;
+  position: relative;
+}
+
+.subreddit:not(.loaded) {
+  backdrop-filter: brightness(0.9);
+}
+
+.subreddit:has(.fetch:hover) {
+  backdrop-filter: brightness(0.8);
+}
+
+.subreddit .loading,
+.subreddit .fetch {
+  position: absolute;
+  font-size: 2rem;
+  background-color: transparent;
+  color: gray;
+  text-align: center;
+  align-content: center;
+}
+
+.subreddit .fetch {
+  top: 0;
+  left: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.subreddit .loading {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+}
+
+.subreddit div.menu {
+  opacity: 0;
+  position: absolute;
+  border: 2px solid lightgray;
+  cursor: default;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: stretch;
+  padding: 0.4rem 0;
+  background-color: white;
+  top: 2.1rem;
+  right: 0;
+  z-index: 1000;
+}
+
+.subreddit div.menu.open {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.subreddit:has(.error) {
+  border-color: red;
+  align-content: center;
+  text-align: center;
+}
+
+.subreddit>.info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid lightgray;
+  transition: all 0.3s;
+  padding: 0.4rem 1rem;
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background-color: white;
+}
+
+.subreddit>.info .icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid lightgray;
+  border-radius: 50%;
+  text-align: center;
+  align-content: center;
+}
+
+.subreddit .banner {
+  position: relative;
+  z-index: 1;
+  height: 4rem;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.subreddit .posts {
+  padding: 0.5rem 0;
+}
+
+.subreddit .post {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.5rem;
+}
+
+.subreddit .post {
+  transition: all 0.3s;
+  user-select: none;
+  cursor: pointer;
+  border-bottom: 2px solid lightgray;
+}
+
+.subreddit .post:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.author {
+  font-size: 0.9rem;
+}
+
+.subreddit .post .title {
+  display: block;
+  font-size: 1.1rem;
+  word-break: break-word;
+  margin-top: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.post-type {
+  display: inline-block;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.4rem;
+  background-color: rgb(180, 180, 180);
+  border-radius: 0.6rem;
+}
+
+.comments-time,
+.time {
+  font-size: 0.8rem;
+  color: gray;
+}
+
+.score {
+  text-align: center;
+  min-width: 3rem;
+}
+
+.score.positive {
+  color: orangered;
+}
+
+.score.negative {
+  color: royalblue;
+}
+
+.subreddit .error {
+  font-size: 1.4rem;
+}
+
+.subreddit:has(.error) button {
+  color: black;
+}
+
+.subreddit .error-message {
+  text-align: left;
+  padding: 2rem 0;
+}
+
+.subreddit .select {
+  padding: 0;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s;
+  user-select: none;
+  cursor: pointer;
+  background-color: lightgray;
+  padding: 0.4rem;
+}
+
+.subreddit .select:hover {
+  filter: brightness(0.7);
+}
+
+.subreddit .select i {
+  position: absolute;
+  right: 0.7rem;
+  pointer-events: none;
+}
+
+.subreddit .select select {
+  padding: 0.4rem;
+  padding-right: 1.5rem;
+  position: relative;
+  top: 0;
+  left: 0;
+  height: 100%;
+}
+
+.subreddit .actions {
+  padding: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}

@@ -1,0 +1,109 @@
+dialog {
+  text-align: center;
+  position: relative;
+  padding-top: 0;
+  border: 2px solid lightgray;
+}
+
+dialog .top {
+  position: sticky;
+  top: 0;
+  padding: 4px 0;
+  z-index: 1000;
+  background-color: white;
+  text-align: right;
+}
+
+dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+dialog.add input {
+  text-align: left;
+  margin: 0.2rem;
+  padding: 0.4rem;
+  border: 2px solid lightgray;
+}
+
+dialog.add input:hover,
+dialog.add input:focus {
+  border-color: dimgray;
+}
+
+dialog.post {
+  width: min(100vw, 50rem);
+}
+
+dialog.post .content {
+  word-break: break-word;
+  text-align: left;
+}
+
+dialog.post img,
+dialog.post video {
+  display: block;
+  margin: auto;
+}
+
+dialog.post img:not(:last-child) {
+  margin-bottom: 1rem;
+}
+
+dialog.post .content div:has(img, video) {
+  background-color: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+}
+
+dialog.post .comments {
+  text-align: left;
+}
+
+dialog.post .content h1 {
+  margin: 0;
+}
+
+dialog.post a.reddit {
+  display: inline-block;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  color: white;
+  background-color: orangered;
+  transition: all 0.3s;
+}
+
+dialog.post a.reddit:hover {
+  filter: brightness(0.7);
+  text-decoration: none;
+}
+
+dialog.post .content .info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.3rem 0;
+}
+
+dialog.post .content .info:last-child {
+  border-top: 2px solid lightgray;
+  margin: 0.5rem 0;
+}
+
+dialog.post .comment {
+  border-width: 2px 0;
+  border-style: solid;
+  border-color: lightgray;
+  background-color: white;
+  margin-top: -2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.5rem;
+}
+
+dialog.post .score {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}
