@@ -87,10 +87,10 @@ export class Subreddit extends Listener {
           video:
             type === 'video'
               ? Object.entries(media.reddit_video)
-                  .filter(([key, _]) =>
-                    ['hls_url', 'dash_url', 'fallback_url'].includes(key)
-                  )
-                  .map(([_, value]) => value)
+                .filter(([key, _]) =>
+                  ['hls_url', 'dash_url', 'fallback_url'].includes(key)
+                )
+                .map(([_, value]) => value)
               : null,
           link: url_overridden_by_dest,
           gallery: media_metadata
@@ -176,11 +176,10 @@ export class Subreddit extends Listener {
     this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${
-    this.info.icon
-      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-      : `<div class="icon">r/</div>`
-  }
+  ${this.info.icon
+        ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+        : `<div class="icon">r/</div>`
+      }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>`
 
@@ -224,11 +223,10 @@ ${this.info.banner ? `<div class="banner" style="background-image: url(${this.in
       this.htmlElement.innerHTML = `
 ${this.info.banner ? `<div class="banner" style="background-image: url(${this.info.banner})"></div>` : ''}
 <div class="info">
-  ${
-    this.info.icon
-      ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
-      : `<div class="icon">r/</div>`
-  }
+  ${this.info.icon
+          ? `<img class="icon" src="${this.info.icon}" alt="r/" />`
+          : `<div class="icon">r/</div>`
+        }
   <a class="name" href="https://www.reddit.com/r/${this.info.name}" target="_blank">r/${this.info.name}</a>
 </div>
 <div class="actions">

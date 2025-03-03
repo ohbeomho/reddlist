@@ -3,6 +3,7 @@ import { formatNumber, formatDate, unescapeHtml } from './utils/format'
 import { getJson } from './utils/request'
 import { REDDIT_API } from './subreddit'
 import { Comment } from './comment'
+import { getScoreHtml } from './utils/score'
 
 export class Post {
   /**
@@ -58,25 +59,25 @@ export class Post {
     const parseComments = (comments) => {
       return comments
         ? comments.data.children.map((comment) => {
-            const {
-              id,
-              body: content,
-              author,
-              score,
-              replies,
-              created: timestampSec
-            } = comment.data
-            return new Comment(
-              this,
-              id,
-              comment.kind,
-              content,
-              author,
-              score,
-              parseComments(replies),
-              timestampSec
-            )
-          })
+          const {
+            id,
+            body: content,
+            author,
+            score,
+            replies,
+            created: timestampSec
+          } = comment.data
+          return new Comment(
+            this,
+            id,
+            comment.kind,
+            content,
+            author,
+            score,
+            parseComments(replies),
+            timestampSec
+          )
+        })
         : []
     }
 
@@ -142,7 +143,7 @@ ${this.content.text ? `<div>${unescapeHtml(this.content.text)}</div>` : ''}
         else if (node === 'video')
           mediaElement[isWide ? 'width' : 'height'] =
             mediaElement.parentElement[
-              isWide ? 'clientWidth' : 'clientHeight'
+            isWide ? 'clientWidth' : 'clientHeight'
             ] - parseFloat(getComputedStyle(document.documentElement).fontSize)
       }
     })
@@ -163,10 +164,7 @@ ${this.content.text ? `<div>${unescapeHtml(this.content.text)}</div>` : ''}
   ${this.type !== 'text' ? `<div class="post-type">${this.type}</div>` : ''}
   <div class="comments-time">${formatNumber(this.commentCount)} comments &middot; ${formatDate(this.timestampSec)}</div>
 </div>
-<div class="score">
-  <i class="fa-solid fa-angle-up"></i>
-  <div>${formatNumber(this.score)}</div>
-</div>`
+${getScoreHtml(this.score)}`
 
     return post
   }

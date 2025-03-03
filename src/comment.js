@@ -1,5 +1,6 @@
 import { Post } from './post'
 import { formatDate, formatNumber } from './utils/format'
+import { getScoreHtml } from './utils/score'
 
 export class Comment {
   /**
@@ -46,10 +47,7 @@ export class Comment {
   </div>
   <div class="content">${this.content}</div>
 </div>
-<div class="score">
-  <i class="fa-solid fa-angle-up"></i>
-  <div>${formatNumber(this.score)}</div>
-</div>`
+${getScoreHtml(this.score)}`
 
     const elements = [comment]
     if (this.replies.length)
