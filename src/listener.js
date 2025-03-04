@@ -61,7 +61,8 @@ export class Listener {
    * @param {ListenerFunc} listener
    */
   removeListener(event, listener) {
-    if (!this.listeners[event] || !this.listeners.includes(listener)) return
+    if (!this.listeners[event] || !this.listeners[event].includes(listener))
+      return
 
     this.listeners[event].splice(this.listeners[event].indexOf(listener), 1)
   }
