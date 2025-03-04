@@ -4,6 +4,7 @@ import { getJson } from './utils/request'
 import { REDDIT_API } from './subreddit'
 import { Comment } from './comment'
 import { getScoreHtml } from './utils/score'
+import { markdownToHtml } from './utils/markdown'
 
 export class Post {
   /**
@@ -59,25 +60,25 @@ export class Post {
     const parseComments = (comments) => {
       return comments
         ? comments.data.children.map((comment) => {
-          const {
-            id,
-            body: content,
-            author,
-            score,
-            replies,
-            created: timestampSec
-          } = comment.data
-          return new Comment(
-            this,
-            id,
-            comment.kind,
-            content,
-            author,
-            score,
-            parseComments(replies),
-            timestampSec
-          )
-        })
+            const {
+              id,
+              body: content,
+              author,
+              score,
+              replies,
+              created: timestampSec
+            } = comment.data
+            return new Comment(
+              this,
+              id,
+              comment.kind,
+              markdownToHtml(String(content)),
+              author,
+              score,
+              parseComments(replies),
+              timestampSec
+            )
+          })
         : []
     }
 
@@ -101,12 +102,13 @@ export class Post {
   ${post.type === 'image' ? `<img src="${post.content.image}" alt="post image" />` : ''}
   ${post.type === 'gallery' ? `${post.content.gallery.map((imageUrl) => `<img src="${imageUrl}" alt="post image" />`).join('')}` : ''}
   ${post.type === 'link' ? `<a href="${post.content.link}" target="_blank">${post.content.link}</a>` : ''}
-  ${post.type === 'video'
-        ? `<video controls>${post.content.video
+  ${
+    post.type === 'video'
+      ? `<video controls>${post.content.video
           .map((videoUrl) => `<source src="${unescapeHtml(videoUrl)}" />`)
           .join('')}</video>`
-        : ''
-      }
+      : ''
+  }
   ${post.type === 'crosspost' ? getPostHtml(post.content.crosspost) : ''}
 </div>
 ${post.content.text ? `<div>${unescapeHtml(post.content.text)}</div>` : ''}
@@ -143,7 +145,7 @@ ${post.content.text ? `<div>${unescapeHtml(post.content.text)}</div>` : ''}
         else if (node === 'video')
           mediaElement[isWide ? 'width' : 'height'] =
             mediaElement.parentElement[
-            isWide ? 'clientWidth' : 'clientHeight'
+              isWide ? 'clientWidth' : 'clientHeight'
             ] - parseFloat(getComputedStyle(document.documentElement).fontSize)
       }
     })

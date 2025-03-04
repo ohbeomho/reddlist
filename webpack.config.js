@@ -33,6 +33,9 @@ module.exports = (env) => {
           use: 'html-loader'
         }
       ]
+    },
+    externals: {
+      markdownit: 'markdownit'
     }
   }
 }
